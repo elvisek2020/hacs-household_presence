@@ -9,4 +9,5 @@ __pycache__/
 # lokální deník práce, synchronizuje se přes iCloud
 _docs/
 .cursor/
+CLAUDE.md
 htmlcov/
