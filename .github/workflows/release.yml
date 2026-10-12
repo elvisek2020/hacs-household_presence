@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Text vydání = sekce „## <tag>“ z CHANGELOG.md (HACS / HA ho ukáže v okně
+      # aktualizace). Bez sekce zůstanou jen automaticky generované poznámky.
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v tag="$GITHUB_REF_NAME" '
+            $1 == "##" { if (found) exit; if ($2 == tag) { found = 1; next } }
+            found
+          ' CHANGELOG.md > release-notes.md
+          if [ -s release-notes.md ]; then
+            echo "Release notes for $GITHUB_REF_NAME:"; cat release-notes.md
+          else
+            echo "::warning::CHANGELOG.md nemá sekci ## $GITHUB_REF_NAME"
+          fi
+      - name: Check version in manifest.json
+        run: |
+          manifest=$(ls custom_components/*/manifest.json | head -1)
+          version=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$manifest")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME nesedí s verzí $version v $manifest"; exit 1
+          fi
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          body_path: release-notes.md
+          generate_release_notes: true

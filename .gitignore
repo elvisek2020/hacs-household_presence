@@ -1,9 +1,12 @@
+.DS_Store
 __pycache__/
 *.py[cod]
 .venv/
 .pytest_cache/
 .ruff_cache/
 .coverage
-htmlcov/
-.DS_Store
+
+# lokální deník práce, synchronizuje se přes iCloud
 _docs/
+.cursor/
+htmlcov/

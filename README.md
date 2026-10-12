@@ -1,5 +1,12 @@
 # Household Presence
 
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![Release](https://img.shields.io/github/v/release/elvisek2020/hacs-household_presence)](https://github.com/elvisek2020/hacs-household_presence/releases)
+[![Validate](https://github.com/elvisek2020/hacs-household_presence/actions/workflows/validate.yml/badge.svg)](https://github.com/elvisek2020/hacs-household_presence/actions/workflows/validate.yml)
+[![Licence](https://img.shields.io/github/license/elvisek2020/hacs-household_presence)](LICENSE)
+
+[![Otevřít v HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=elvisek2020&repository=hacs-household_presence&category=integration)
+
 Integrace pro Home Assistant, která z entit, které už máte (osoby, trackery z aplikace nebo z routeru, binární senzory, kalendáře), určí:
 
 - **kdo** je doma a **kolik** lidí,
@@ -9,15 +16,30 @@ Integrace pro Home Assistant, která z entit, které už máte (osoby, trackery 
 
 Integrace nic neřídí. Poskytuje stabilní sadu entit, na kterou se napojí topení, světla, alarm nebo notifikace. Všechno běží lokálně, poloha se neukládá.
 
+## Předpoklady a závislosti
+
+- Home Assistant 2026.3 nebo novější.
+- Entity, ze kterých se přítomnost pozná: `person`, `device_tracker` (aplikace HA, UniFi a podobně), binární senzory (počítač, konzole, dveře), volitelně kalendáře a senzory vzdálenosti (např. integrace Proximity).
+- Žádné další knihovny ani cloud.
+
 ## Instalace
 
-1. HACS → Integrace → menu ⋮ → **Vlastní repozitáře** → `https://github.com/elvisek2020/hacs-household_presence`, kategorie *Integrace*.
-2. Nainstalujte **Household Presence** a restartujte Home Assistant.
-3. **Nastavení → Zařízení a služby → Přidat integraci → Household Presence**. Zadáte název domácnosti a zpoždění odchodu.
+### HACS (doporučeno)
 
-Vyžaduje Home Assistant 2026.3 nebo novější.
+1. HACS → tři tečky vpravo nahoře → **Custom repositories**
+2. Vlož URL `https://github.com/elvisek2020/hacs-household_presence`, kategorie **Integration**
+3. Nainstaluj **Household Presence**
+4. Restartuj Home Assistant a přidej ji v Nastavení → Zařízení a služby → Přidat integraci. Zadáš název domácnosti a zpoždění odchodu.
 
-## Členové a signály
+HACS nabízí aktualizace z GitHub releases.
+
+### Ručně
+
+Zkopíruj `custom_components/household_presence` do `/config/custom_components/` a restartuj HA.
+
+## Konfigurace
+
+### Členové a signály
 
 Každý člen domácnosti je samostatná položka integrace (**Přidat člena**). Počet členů, jména i signály jsou libovolné.
 
@@ -46,7 +68,7 @@ U signálu lze dále nastavit:
 - **časové okno platnosti**, např. počítač jen 6–23 h;
 - **důvěru**: dovolenou nebo „vynutit pryč“ ukončí jen příchod se signálem s vysokou důvěrou.
 
-### Plán z kalendáře
+#### Plán z kalendáře
 
 Člen může mít jeden nebo víc kalendářů, třeba školní rozvrh nebo pracovní kalendář. Během události je člen pryč, pokud ho žádný signál nevidí doma.
 
@@ -55,11 +77,11 @@ U signálu lze dále nastavit:
 - Signál, který svítí už od začátku plánu a nezměnil se, se ignoruje. Typicky je to počítač zapnutý přes noc. Když se signál během plánu zapne (dítě je nemocné a zapne počítač), člen je doma.
 - Konec plánu je očekávaný návrat. Člen s volbou „držet poslední stav“ se po konci plánu bere jako doma.
 
-### Blížení
+#### Blížení
 
 Volitelně lze zadat entitu vzdálenosti od domova a entitu směru (např. z vestavěné integrace **Proximity**). Když vzdálenost klesá pod práh, `binary_sensor.hp_someone_approaching` se zapne a vznikne odhad příchodu.
 
-## Domácnost
+### Domácnost
 
 V **Možnostech** integrace najdete:
 
@@ -71,7 +93,7 @@ V **Možnostech** integrace najdete:
 - **Kalendáře dovolené:** událost s klíčovým slovem (např. `dovolená, chata`) znamená, že je pryč celá domácnost.
 - **Učení:** poločas zapomínání a minimum dnů.
 
-### Logika
+#### Logika
 
 - **Doma:** stačí jeden signál „doma“. Příchod platí hned.
 - **Odchod:** člen jde do stavu *právě odešel* a pryč je až po zpoždění odchodu. Když se během zpoždění vrátí, nevznikne žádná událost.
@@ -167,3 +189,21 @@ python3.14 -m venv .venv && .venv/bin/pip install -r requirements_test.txt ruff
 ```
 
 Jádro (`custom_components/household_presence/core/`) nemá žádné importy Home Assistanta a testuje se samostatně (`.venv/bin/pytest tests/core`).
+
+## Vydání verze
+
+1. Zvedni verzi v `manifest.json` a `pyproject.toml` (SemVer).
+2. Doplň sekci `## vX.Y.Z — RRRR-MM-DD` do `CHANGELOG.md`.
+3. Commit `Release vX.Y.Z: …`, `git tag vX.Y.Z`, push commitu i tagu.
+4. GitHub Actions vytvoří release s textem z CHANGELOG a HACS nabídne aktualizaci.
+
+## Známá omezení
+
+- Stačí jeden signál „doma“. Telefon zapomenutý doma na Wi-Fi proto drží člověka doma; řeší to ruční režim člena nebo signál „jen pryč“.
+- Člen bez telefonu (jen „jen doma“ signály a plán) se mimo plán pozná až podle zapnutého zařízení.
+- Odhad návratu z učení začne fungovat až po několika dnech stejného typu (výchozí minimum 3).
+- Výchozí prahy (zpoždění odchodu, noční okno, 24 h, 12 h) jsou odhady, vylaď je podle svého provozu.
+
+## Autor
+
+**[elvisek2020](https://github.com/elvisek2020)** — integrace vznikla jako společný zdroj přítomnosti pro topení a další automatizace domácnosti. Licence MIT.
