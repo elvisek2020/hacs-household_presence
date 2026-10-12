@@ -1,0 +1,24 @@
+set_away_until:
+  fields:
+    until:
+      required: true
+      selector:
+        datetime:
+    member:
+      required: false
+      selector:
+        text:
+
+clear_away_until:
+  fields:
+    member:
+      required: false
+      selector:
+        text:
+
+reset_learning:
+  fields:
+    member:
+      required: false
+      selector:
+        text:

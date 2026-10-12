@@ -1,0 +1,434 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Household Presence",
+        "description": "Create the household. Members are added afterwards as separate entries, each with its own signals.",
+        "data": {
+          "name": "Household name",
+          "departure_delay": "Departure delay"
+        },
+        "data_description": {
+          "name": "Used as the device name of the household entities.",
+          "departure_delay": "How long all signals have to say \"away\" before a member counts as away."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Household settings",
+        "menu_options": {
+          "general": "Delays and timeouts",
+          "night": "Night window and doors",
+          "long_away": "Long absence",
+          "guest": "Guest",
+          "household_signals": "Household signals and workday",
+          "vacation": "Vacation calendars",
+          "learning": "Learning"
+        }
+      },
+      "general": {
+        "title": "Delays and timeouts",
+        "data": {
+          "departure_delay": "Departure delay",
+          "startup_grace": "Startup grace",
+          "just_arrived": "Just arrived duration",
+          "unavailable_hours": "Unavailable timeout"
+        },
+        "data_description": {
+          "departure_delay": "Default for members without their own delay.",
+          "startup_grace": "No departures are evaluated after Home Assistant starts.",
+          "just_arrived": "How long a member stays in the state \"just arrived\".",
+          "unavailable_hours": "When all signals of a member are unavailable this long, the member becomes unknown."
+        }
+      },
+      "night": {
+        "title": "Night window and doors",
+        "description": "Phones put Wi-Fi to sleep at night. In the night window a member does not leave only because home-only signals went off; a door change confirms the departure.",
+        "data": {
+          "night_enabled": "Use the night window",
+          "night_start": "Night starts",
+          "night_end": "Night ends",
+          "door_entities": "Entrance doors",
+          "door_window": "Door window"
+        },
+        "data_description": {
+          "door_entities": "Any change of these entities counts as using the door.",
+          "door_window": "A door change this long before the signals went off still counts."
+        }
+      },
+      "long_away": {
+        "title": "Long absence",
+        "description": "Long absence always applies during vacation mode, \"away until\" or a vacation calendar event.",
+        "data": {
+          "long_away_hours": "Nobody home for",
+          "long_away_prediction": "Use the expected return",
+          "long_away_prediction_min": "Minimum absence for the prediction rule",
+          "return_horizon": "Return horizon"
+        },
+        "data_description": {
+          "long_away_prediction": "Long absence also when nobody is expected back within the horizon.",
+          "return_horizon": "Expected return further away than this means a long absence."
+        }
+      },
+      "guest": {
+        "title": "Guest",
+        "data": {
+          "guest_auto_off": "Turn the guest off",
+          "guest_off_time": "At time",
+          "guest_off_hours": "After"
+        }
+      },
+      "household_signals": {
+        "title": "Household signals and workday",
+        "data": {
+          "household_signals": "Household signals",
+          "workday_entity": "Workday sensor"
+        },
+        "data_description": {
+          "household_signals": "Anonymous signals that mean \"someone is home\" when on (e.g. TV). They do not say who.",
+          "workday_entity": "Binary sensor that is on on workdays. Without it Monday to Friday are workdays."
+        }
+      },
+      "vacation": {
+        "title": "Vacation calendars",
+        "data": {
+          "vacation_calendars": "Calendars",
+          "vacation_keywords": "Keywords"
+        },
+        "data_description": {
+          "vacation_keywords": "Comma separated; an event whose title contains one of them means the whole household is away. Empty: every event counts."
+        }
+      },
+      "learning": {
+        "title": "Learning",
+        "data": {
+          "half_life_weeks": "Half-life",
+          "min_samples": "Minimum days"
+        },
+        "data_description": {
+          "half_life_weeks": "Weeks after which a day counts half.",
+          "min_samples": "Days of the same kind needed for a prediction."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "member": {
+      "entry_type": "Member",
+      "initiate_flow": {
+        "user": "Add member",
+        "reconfigure": "Edit member"
+      },
+      "step": {
+        "member": {
+          "title": "Member",
+          "data": {
+            "name": "Name",
+            "no_signal_policy": "Without a home signal",
+            "departure_delay": "Own departure delay",
+            "night_mode": "Night window",
+            "night_start": "Night starts",
+            "night_end": "Night ends"
+          },
+          "data_description": {
+            "no_signal_policy": "What happens when no signal says home and nothing says away.",
+            "departure_delay": "Empty: the household default.",
+            "night_start": "Only for an own night window."
+          }
+        },
+        "menu": {
+          "title": "{name}",
+          "description": "Signals:\n{signals}",
+          "menu_options": {
+            "add_signal": "Add signal",
+            "edit_signal": "Edit signal",
+            "remove_signal": "Remove signals",
+            "plan": "Plan from calendars",
+            "approach": "Approach",
+            "finish": "Save"
+          }
+        },
+        "signal": {
+          "title": "Signal",
+          "data": {
+            "entity_id": "Entity",
+            "kind": "Meaning",
+            "home_states": "States meaning home",
+            "away_states": "States meaning away",
+            "arrival_delay": "Arrival delay",
+            "max_on": "Stuck after",
+            "valid_from": "Valid from",
+            "valid_to": "Valid to",
+            "trust": "Trust"
+          },
+          "data_description": {
+            "home_states": "Empty: home for person and device_tracker, otherwise on/home. For a sensor e.g. the home SSID.",
+            "away_states": "Home and away signal: empty means every other state is away. Away-only signal: empty means on.",
+            "arrival_delay": "The signal has to say home this long (useful for a computer or console).",
+            "max_on": "A signal home for longer is considered stuck and ignored.",
+            "valid_from": "Outside the time window the signal says nothing.",
+            "trust": "Only a high-trust arrival ends vacation or a forced away."
+          }
+        },
+        "edit_signal": {
+          "title": "Edit signal",
+          "data": {
+            "entity_id": "Signal"
+          }
+        },
+        "remove_signal": {
+          "title": "Remove signals",
+          "data": {
+            "signals": "Signals"
+          }
+        },
+        "plan": {
+          "title": "Plan from calendars",
+          "description": "While an event runs the member is away unless a signal sees them home.",
+          "data": {
+            "calendars": "Calendars",
+            "title_filter": "Title filter",
+            "gap_bridge": "Bridge gaps up to",
+            "lead": "Lead",
+            "trail": "Trail",
+            "certain": "Plan means away",
+            "all_day": "Use all-day events"
+          },
+          "data_description": {
+            "title_filter": "Comma separated; empty means every event.",
+            "lead": "Leaving before the first event (way there).",
+            "trail": "Coming back after the last event (way back).",
+            "certain": "Off: the plan is used only for the expected return."
+          }
+        },
+        "approach": {
+          "title": "Approach",
+          "description": "Distance and direction from home, e.g. from the Proximity integration. Leave the distance empty to turn it off.",
+          "data": {
+            "distance_entity": "Distance",
+            "direction_entity": "Direction",
+            "threshold_km": "Closer than",
+            "confirmations": "Decreasing readings",
+            "speed_kmh": "Average speed"
+          }
+        },
+        "finish": {
+          "title": "Cannot save",
+          "description": "Go back to the menu and add a signal or a plan."
+        }
+      },
+      "error": {
+        "name_exists": "A member with this name already exists.",
+        "invalid_name": "Enter a name.",
+        "signal_exists": "This entity is already a signal of the member.",
+        "no_signals": "The member needs at least one signal or a plan."
+      }
+    }
+  },
+  "selector": {
+    "signal_kind": {
+      "options": {
+        "home_away": "Home and away (GPS, person)",
+        "home_only": "Only home (Wi-Fi, computer, Bluetooth)",
+        "away_only": "Only away (work VPN, car away)"
+      }
+    },
+    "trust": {
+      "options": {
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
+      }
+    },
+    "no_signal_policy": {
+      "options": {
+        "away_after_delay": "Away after the departure delay",
+        "hold_last": "Keep the last state (plan or manual only)"
+      }
+    },
+    "night_mode": {
+      "options": {
+        "inherit": "Household setting",
+        "custom": "Own",
+        "off": "Off"
+      }
+    },
+    "guest_auto_off": {
+      "options": {
+        "never": "Never",
+        "at_time": "At a time",
+        "after_hours": "After some hours"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "someone_home": {
+        "name": "Someone home"
+      },
+      "long_away": {
+        "name": "Long away"
+      },
+      "someone_approaching": {
+        "name": "Someone approaching"
+      },
+      "home": {
+        "name": "Home"
+      }
+    },
+    "sensor": {
+      "people_home": {
+        "name": "People home"
+      },
+      "household_state": {
+        "name": "Household state",
+        "state": {
+          "home": "Home",
+          "away": "Away",
+          "long_away": "Long away"
+        }
+      },
+      "away_since": {
+        "name": "Away since"
+      },
+      "expected_return": {
+        "name": "Expected return"
+      },
+      "expected_return_confidence": {
+        "name": "Expected return confidence"
+      },
+      "expected_return_error": {
+        "name": "Expected return error"
+      },
+      "state": {
+        "name": "State",
+        "state": {
+          "unknown": "Unknown",
+          "home": "Home",
+          "just_arrived": "Just arrived",
+          "just_left": "Just left",
+          "away": "Away"
+        }
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "auto": "Automatic",
+          "force_home": "Force home",
+          "force_away": "Force away",
+          "vacation": "Vacation"
+        }
+      },
+      "person_mode": {
+        "name": "Mode",
+        "state": {
+          "auto": "Automatic",
+          "force_home": "Force home",
+          "force_away": "Force away"
+        }
+      }
+    },
+    "switch": {
+      "guest": {
+        "name": "Guest"
+      }
+    },
+    "datetime": {
+      "away_until": {
+        "name": "Away until"
+      }
+    },
+    "event": {
+      "household": {
+        "name": "Presence event",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "arrived": "Arrived",
+              "left": "Left",
+              "first_arrived": "First arrived",
+              "last_left": "Last left",
+              "long_away_started": "Long absence started",
+              "long_away_ended": "Long absence ended",
+              "mode_changed": "Mode changed"
+            }
+          }
+        }
+      }
+    }
+  },
+  "issues": {
+    "signal_missing": {
+      "title": "Missing signal of {member}",
+      "description": "The entity {entity_id} used as a signal of {member} does not exist. Edit the member or restore the entity."
+    },
+    "signal_stuck": {
+      "title": "Stuck signal of {member}",
+      "description": "The entity {entity_id} has said home for longer than allowed and is ignored until it changes."
+    },
+    "calendar_unavailable": {
+      "title": "Calendar unavailable",
+      "description": "The calendar {entity_id} cannot be read. Its plan is not used until it works again."
+    },
+    "member_unavailable": {
+      "title": "No signals of {member}",
+      "description": "All signals of {member} have been unavailable for a long time, the member is unknown."
+    },
+    "member_cannot_leave": {
+      "title": "{member} can never leave",
+      "description": "{member} has only home-only signals, keeps the last state and has no plan. Add a home and away signal, a plan, or change the policy."
+    }
+  },
+  "services": {
+    "set_away_until": {
+      "name": "Set away until",
+      "description": "Plans the return of the household or of one member.",
+      "fields": {
+        "until": {
+          "name": "Until",
+          "description": "Planned return."
+        },
+        "member": {
+          "name": "Member",
+          "description": "Name of the member; empty means the whole household."
+        }
+      }
+    },
+    "clear_away_until": {
+      "name": "Clear away until",
+      "description": "Removes the planned return.",
+      "fields": {
+        "member": {
+          "name": "Member",
+          "description": "Name of the member; empty means the whole household."
+        }
+      }
+    },
+    "reset_learning": {
+      "name": "Reset learning",
+      "description": "Forgets learned habits.",
+      "fields": {
+        "member": {
+          "name": "Member",
+          "description": "Name of the member; empty means everybody."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Household Presence is not loaded."
+    },
+    "unknown_member": {
+      "message": "Unknown member: {member}."
+    },
+    "past_time": {
+      "message": "The time must be in the future."
+    }
+  }
+}

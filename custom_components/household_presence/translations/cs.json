@@ -1,0 +1,434 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Přítomnost domácnosti",
+        "description": "Založí domácnost. Členy přidáte potom jako samostatné položky, každého s vlastními signály.",
+        "data": {
+          "name": "Název domácnosti",
+          "departure_delay": "Zpoždění odchodu"
+        },
+        "data_description": {
+          "name": "Použije se jako název zařízení entit domácnosti.",
+          "departure_delay": "Jak dlouho musí všechny signály hlásit „pryč“, než se člen počítá jako pryč."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nastavení domácnosti",
+        "menu_options": {
+          "general": "Zpoždění a časové limity",
+          "night": "Noční okno a dveře",
+          "long_away": "Dlouhodobá nepřítomnost",
+          "guest": "Host",
+          "household_signals": "Signály domácnosti a pracovní den",
+          "vacation": "Kalendáře dovolené",
+          "learning": "Učení"
+        }
+      },
+      "general": {
+        "title": "Zpoždění a časové limity",
+        "data": {
+          "departure_delay": "Zpoždění odchodu",
+          "startup_grace": "Klid po startu",
+          "just_arrived": "Délka stavu „právě přišel“",
+          "unavailable_hours": "Limit nedostupnosti"
+        },
+        "data_description": {
+          "departure_delay": "Výchozí hodnota pro členy bez vlastního zpoždění.",
+          "startup_grace": "Po startu Home Assistanta se po tuto dobu nevyhodnocují odchody.",
+          "just_arrived": "Jak dlouho člen zůstane ve stavu „právě přišel“.",
+          "unavailable_hours": "Když jsou všechny signály člena tak dlouho nedostupné, stav člena je neznámý."
+        }
+      },
+      "night": {
+        "title": "Noční okno a dveře",
+        "description": "Telefony v noci uspávají Wi-Fi. V nočním okně člen neodejde jen proto, že zhasly signály „jen doma“. Odchod potvrdí změna dveří.",
+        "data": {
+          "night_enabled": "Používat noční okno",
+          "night_start": "Začátek noci",
+          "night_end": "Konec noci",
+          "door_entities": "Vstupní dveře",
+          "door_window": "Okno pro dveře"
+        },
+        "data_description": {
+          "door_entities": "Jakákoli změna těchto entit znamená použití dveří.",
+          "door_window": "Platí i změna dveří až tolik minut před zhasnutím signálů."
+        }
+      },
+      "long_away": {
+        "title": "Dlouhodobá nepřítomnost",
+        "description": "Dlouhodobá nepřítomnost platí vždy v režimu dovolená, při „pryč do“ a během události v kalendáři dovolené.",
+        "data": {
+          "long_away_hours": "Nikdo doma déle než",
+          "long_away_prediction": "Použít očekávaný návrat",
+          "long_away_prediction_min": "Minimální nepřítomnost pro pravidlo predikce",
+          "return_horizon": "Horizont návratu"
+        },
+        "data_description": {
+          "long_away_prediction": "Dlouhodobě pryč i tehdy, když se v horizontu nikdo nevrátí.",
+          "return_horizon": "Očekávaný návrat dál než tato doba znamená dlouhodobou nepřítomnost."
+        }
+      },
+      "guest": {
+        "title": "Host",
+        "data": {
+          "guest_auto_off": "Vypnout hosta",
+          "guest_off_time": "V čase",
+          "guest_off_hours": "Po"
+        }
+      },
+      "household_signals": {
+        "title": "Signály domácnosti a pracovní den",
+        "data": {
+          "household_signals": "Signály domácnosti",
+          "workday_entity": "Senzor pracovního dne"
+        },
+        "data_description": {
+          "household_signals": "Anonymní signály, které zapnuté znamenají „někdo je doma“ (např. televize). Neříkají kdo.",
+          "workday_entity": "Binární senzor zapnutý v pracovní dny. Bez něj jsou pracovní dny pondělí až pátek."
+        }
+      },
+      "vacation": {
+        "title": "Kalendáře dovolené",
+        "data": {
+          "vacation_calendars": "Kalendáře",
+          "vacation_keywords": "Klíčová slova"
+        },
+        "data_description": {
+          "vacation_keywords": "Oddělená čárkou. Událost, jejíž název některé obsahuje, znamená, že je pryč celá domácnost. Prázdné: platí každá událost."
+        }
+      },
+      "learning": {
+        "title": "Učení",
+        "data": {
+          "half_life_weeks": "Poločas",
+          "min_samples": "Minimum dnů"
+        },
+        "data_description": {
+          "half_life_weeks": "Po kolika týdnech má den poloviční váhu.",
+          "min_samples": "Kolik dnů stejného druhu je potřeba pro odhad."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "member": {
+      "entry_type": "Člen",
+      "initiate_flow": {
+        "user": "Přidat člena",
+        "reconfigure": "Upravit člena"
+      },
+      "step": {
+        "member": {
+          "title": "Člen",
+          "data": {
+            "name": "Jméno",
+            "no_signal_policy": "Bez signálu doma",
+            "departure_delay": "Vlastní zpoždění odchodu",
+            "night_mode": "Noční okno",
+            "night_start": "Začátek noci",
+            "night_end": "Konec noci"
+          },
+          "data_description": {
+            "no_signal_policy": "Co se stane, když žádný signál neříká doma a nic neříká pryč.",
+            "departure_delay": "Prázdné: výchozí hodnota domácnosti.",
+            "night_start": "Jen pro vlastní noční okno."
+          }
+        },
+        "menu": {
+          "title": "{name}",
+          "description": "Signály:\n{signals}",
+          "menu_options": {
+            "add_signal": "Přidat signál",
+            "edit_signal": "Upravit signál",
+            "remove_signal": "Odebrat signály",
+            "plan": "Plán z kalendářů",
+            "approach": "Blížení",
+            "finish": "Uložit"
+          }
+        },
+        "signal": {
+          "title": "Signál",
+          "data": {
+            "entity_id": "Entita",
+            "kind": "Význam",
+            "home_states": "Stavy znamenající doma",
+            "away_states": "Stavy znamenající pryč",
+            "arrival_delay": "Zpoždění příchodu",
+            "max_on": "Zaseknutý po",
+            "valid_from": "Platí od",
+            "valid_to": "Platí do",
+            "trust": "Důvěra"
+          },
+          "data_description": {
+            "home_states": "Prázdné: home u person a device_tracker, jinak on/home. U senzoru třeba SSID domácí Wi-Fi.",
+            "away_states": "Signál doma i pryč: prázdné znamená, že každý jiný stav je pryč. Signál jen pryč: prázdné znamená on.",
+            "arrival_delay": "Signál musí hlásit doma aspoň takto dlouho (hodí se u počítače nebo konzole).",
+            "max_on": "Signál hlásící doma déle se považuje za zaseknutý a ignoruje se.",
+            "valid_from": "Mimo časové okno signál nic neříká.",
+            "trust": "Dovolenou nebo vynucené pryč ukončí jen příchod se signálem s vysokou důvěrou."
+          }
+        },
+        "edit_signal": {
+          "title": "Upravit signál",
+          "data": {
+            "entity_id": "Signál"
+          }
+        },
+        "remove_signal": {
+          "title": "Odebrat signály",
+          "data": {
+            "signals": "Signály"
+          }
+        },
+        "plan": {
+          "title": "Plán z kalendářů",
+          "description": "Během události je člen pryč, pokud ho některý signál nevidí doma.",
+          "data": {
+            "calendars": "Kalendáře",
+            "title_filter": "Filtr názvu",
+            "gap_bridge": "Překlenout mezery do",
+            "lead": "Předstih",
+            "trail": "Dojezd",
+            "certain": "Plán znamená pryč",
+            "all_day": "Použít celodenní události"
+          },
+          "data_description": {
+            "title_filter": "Oddělené čárkou. Prázdné znamená každou událost.",
+            "lead": "Odchod před první událostí (cesta tam).",
+            "trail": "Návrat po poslední události (cesta zpět).",
+            "certain": "Vypnuto: plán se použije jen pro očekávaný návrat."
+          }
+        },
+        "approach": {
+          "title": "Blížení",
+          "description": "Vzdálenost a směr od domova, například z integrace Proximity. Prázdná vzdálenost blížení vypne.",
+          "data": {
+            "distance_entity": "Vzdálenost",
+            "direction_entity": "Směr",
+            "threshold_km": "Blíž než",
+            "confirmations": "Klesajících čtení",
+            "speed_kmh": "Průměrná rychlost"
+          }
+        },
+        "finish": {
+          "title": "Nelze uložit",
+          "description": "Vraťte se do menu a přidejte signál nebo plán."
+        }
+      },
+      "error": {
+        "name_exists": "Člen s tímto jménem už existuje.",
+        "invalid_name": "Zadejte jméno.",
+        "signal_exists": "Tato entita už je signálem člena.",
+        "no_signals": "Člen potřebuje aspoň jeden signál nebo plán."
+      }
+    }
+  },
+  "selector": {
+    "signal_kind": {
+      "options": {
+        "home_away": "Doma i pryč (GPS, osoba)",
+        "home_only": "Jen doma (Wi-Fi, počítač, Bluetooth)",
+        "away_only": "Jen pryč (pracovní VPN, auto mimo domov)"
+      }
+    },
+    "trust": {
+      "options": {
+        "high": "Vysoká",
+        "normal": "Běžná",
+        "low": "Nízká"
+      }
+    },
+    "no_signal_policy": {
+      "options": {
+        "away_after_delay": "Pryč po zpoždění odchodu",
+        "hold_last": "Držet poslední stav (jen plán nebo ručně)"
+      }
+    },
+    "night_mode": {
+      "options": {
+        "inherit": "Podle domácnosti",
+        "custom": "Vlastní",
+        "off": "Vypnuto"
+      }
+    },
+    "guest_auto_off": {
+      "options": {
+        "never": "Nikdy",
+        "at_time": "V čase",
+        "after_hours": "Po několika hodinách"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "someone_home": {
+        "name": "Někdo doma"
+      },
+      "long_away": {
+        "name": "Dlouhodobě pryč"
+      },
+      "someone_approaching": {
+        "name": "Někdo se blíží"
+      },
+      "home": {
+        "name": "Doma"
+      }
+    },
+    "sensor": {
+      "people_home": {
+        "name": "Lidí doma"
+      },
+      "household_state": {
+        "name": "Stav domácnosti",
+        "state": {
+          "home": "Doma",
+          "away": "Pryč",
+          "long_away": "Dlouhodobě pryč"
+        }
+      },
+      "away_since": {
+        "name": "Pryč od"
+      },
+      "expected_return": {
+        "name": "Očekávaný návrat"
+      },
+      "expected_return_confidence": {
+        "name": "Jistota očekávaného návratu"
+      },
+      "expected_return_error": {
+        "name": "Chyba očekávaného návratu"
+      },
+      "state": {
+        "name": "Stav",
+        "state": {
+          "unknown": "Neznámý",
+          "home": "Doma",
+          "just_arrived": "Právě přišel",
+          "just_left": "Právě odešel",
+          "away": "Pryč"
+        }
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Režim",
+        "state": {
+          "auto": "Automaticky",
+          "force_home": "Vynutit doma",
+          "force_away": "Vynutit pryč",
+          "vacation": "Dovolená"
+        }
+      },
+      "person_mode": {
+        "name": "Režim",
+        "state": {
+          "auto": "Automaticky",
+          "force_home": "Vynutit doma",
+          "force_away": "Vynutit pryč"
+        }
+      }
+    },
+    "switch": {
+      "guest": {
+        "name": "Host"
+      }
+    },
+    "datetime": {
+      "away_until": {
+        "name": "Pryč do"
+      }
+    },
+    "event": {
+      "household": {
+        "name": "Událost přítomnosti",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "arrived": "Příchod",
+              "left": "Odchod",
+              "first_arrived": "První příchod",
+              "last_left": "Poslední odchod",
+              "long_away_started": "Začátek dlouhodobé nepřítomnosti",
+              "long_away_ended": "Konec dlouhodobé nepřítomnosti",
+              "mode_changed": "Změna režimu"
+            }
+          }
+        }
+      }
+    }
+  },
+  "issues": {
+    "signal_missing": {
+      "title": "Chybí signál člena {member}",
+      "description": "Entita {entity_id}, která je signálem člena {member}, neexistuje. Upravte člena nebo entitu obnovte."
+    },
+    "signal_stuck": {
+      "title": "Zaseknutý signál člena {member}",
+      "description": "Entita {entity_id} hlásí doma déle, než je povoleno. Ignoruje se, dokud se nezmění."
+    },
+    "calendar_unavailable": {
+      "title": "Kalendář je nedostupný",
+      "description": "Kalendář {entity_id} nejde načíst. Jeho plán se nepoužije, dokud nebude znovu fungovat."
+    },
+    "member_unavailable": {
+      "title": "Člen {member} nemá signály",
+      "description": "Všechny signály člena {member} jsou dlouho nedostupné, stav člena je neznámý."
+    },
+    "member_cannot_leave": {
+      "title": "Člen {member} nikdy neodejde",
+      "description": "Člen {member} má jen signály „jen doma“, drží poslední stav a nemá plán. Přidejte signál doma i pryč nebo plán, nebo změňte chování bez signálu."
+    }
+  },
+  "services": {
+    "set_away_until": {
+      "name": "Nastavit pryč do",
+      "description": "Naplánuje návrat celé domácnosti nebo jednoho člena.",
+      "fields": {
+        "until": {
+          "name": "Do",
+          "description": "Plánovaný návrat."
+        },
+        "member": {
+          "name": "Člen",
+          "description": "Jméno člena. Prázdné znamená celou domácnost."
+        }
+      }
+    },
+    "clear_away_until": {
+      "name": "Zrušit pryč do",
+      "description": "Odstraní plánovaný návrat.",
+      "fields": {
+        "member": {
+          "name": "Člen",
+          "description": "Jméno člena. Prázdné znamená celou domácnost."
+        }
+      }
+    },
+    "reset_learning": {
+      "name": "Smazat učení",
+      "description": "Zapomene naučené zvyklosti.",
+      "fields": {
+        "member": {
+          "name": "Člen",
+          "description": "Jméno člena. Prázdné znamená všechny."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Přítomnost domácnosti není načtená."
+    },
+    "unknown_member": {
+      "message": "Neznámý člen: {member}."
+    },
+    "past_time": {
+      "message": "Čas musí být v budoucnosti."
+    }
+  }
+}
