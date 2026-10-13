@@ -235,6 +235,66 @@ def test_restart_during_plan_is_not_an_arrival():
     assert house.person("kid").state is PersonState.AWAY
 
 
+def test_signal_outage_during_plan_is_not_an_arrival():
+    house = House([kid()], now=at(6))
+    school_day(house)
+    house.set(PC, "on")
+    house.run_until(at(9))
+    assert house.person("kid").state is PersonState.AWAY
+    # An integration reload: unavailable for 30 s, then the same state again.
+    house.set(PC, "unavailable")
+    house.run(0.5)
+    house.set(PC, "on")
+    house.run(30)
+    assert house.person("kid").state is PersonState.AWAY
+    assert EventType.ARRIVED not in house.event_types("Kid")
+
+
+def test_signal_outage_after_restart_during_plan_is_not_an_arrival():
+    house = House([kid()], {c.CONF_STARTUP_GRACE: 0}, now=at(6))
+    school_day(house)
+    house.set(PC, "on")
+    house.run_until(at(9))
+    house.restart()
+    house.set(PC, "unavailable")
+    house.run(0.5)
+    house.set(PC, "on")
+    house.run(30)
+    assert house.person("kid").state is PersonState.AWAY
+
+
+def test_real_switch_on_during_plan_is_still_an_arrival():
+    house = House([kid()], now=at(6))
+    school_day(house)
+    house.set(PC, "on")
+    house.run_until(at(9))
+    house.set(PC, "unavailable")
+    house.run(0.5)
+    house.set(PC, "off")
+    house.run(5)
+    house.set(PC, "on")
+    assert house.person("kid").state is PersonState.JUST_ARRIVED
+
+
+def test_outage_does_not_restart_arrival_delay_or_stuck_timer():
+    house = House(
+        [member("Teen", sig("binary_sensor.console", arrival_delay=10, max_on=2), sig(WIFI))],
+        now=at(10),
+    )
+    house.set(WIFI, "not_home", step=False)
+    house.set("binary_sensor.console", "on")
+    house.run(10)
+    assert house.person("teen").state is PersonState.JUST_ARRIVED
+    house.run(100)
+    house.set("binary_sensor.console", "unavailable")
+    house.run(0.5)
+    house.set("binary_sensor.console", "on")
+    # Stuck at 12:00 (two hours despite the outage), away after the delay.
+    house.run(25)
+    assert "signal_stuck" in house.problems()
+    assert house.person("teen").state is PersonState.AWAY
+
+
 def test_gap_longer_than_bridge_splits_blocks():
     house = House([kid()], now=at(7))
     house.calendar(

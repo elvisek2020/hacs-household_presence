@@ -20,6 +20,10 @@ _TEXTS = {
         EventType.LONG_AWAY_STARTED: "Dlouhodobě pryč: {reason}",
         EventType.LONG_AWAY_ENDED: "Konec dlouhodobé nepřítomnosti",
         EventType.MODE_CHANGED: "Režim: {mode}",
+        EventType.MULTIPLE_HOME: "Víc lidí doma ({count})",
+        EventType.MULTIPLE_ENDED: "Doma méně než {min} lidí",
+        EventType.GROUP_HOME: "Skupina {name}: doma",
+        EventType.GROUP_AWAY: "Skupina {name}: pryč",
     },
     "en": {
         EventType.ARRIVED: "Arrived: {name}",
@@ -29,6 +33,10 @@ _TEXTS = {
         EventType.LONG_AWAY_STARTED: "Away for long: {reason}",
         EventType.LONG_AWAY_ENDED: "Long absence ended",
         EventType.MODE_CHANGED: "Mode: {mode}",
+        EventType.MULTIPLE_HOME: "Several people home ({count})",
+        EventType.MULTIPLE_ENDED: "Fewer than {min} people home",
+        EventType.GROUP_HOME: "Group {name}: home",
+        EventType.GROUP_AWAY: "Group {name}: away",
     },
 }
 
@@ -95,6 +103,8 @@ def message(event: Event, language: str | None, tz: tzinfo) -> str:
         time=_clock(event.at.astimezone(tz)),
         reason=_REASONS[lang].get(str(data.get("reason")), str(data.get("reason", ""))),
         mode=_MODES[lang].get(str(data.get("to")), str(data.get("to", ""))),
+        count=data.get("count", ""),
+        min=data.get("min", ""),
     )
     if event.type is EventType.LONG_AWAY_STARTED and data.get("until"):
         until = datetime.fromisoformat(str(data["until"]))

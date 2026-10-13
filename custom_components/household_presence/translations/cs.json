@@ -24,7 +24,7 @@
           "night": "Noční okno a dveře",
           "long_away": "Dlouhodobá nepřítomnost",
           "guest": "Host",
-          "household_signals": "Signály domácnosti a pracovní den",
+          "household_signals": "Domácnost: signály, pracovní den, víc lidí",
           "vacation": "Kalendáře dovolené",
           "learning": "Učení"
         }
@@ -82,14 +82,16 @@
         }
       },
       "household_signals": {
-        "title": "Signály domácnosti a pracovní den",
+        "title": "Domácnost",
         "data": {
           "household_signals": "Signály domácnosti",
-          "workday_entity": "Senzor pracovního dne"
+          "workday_entity": "Senzor pracovního dne",
+          "multiple_min": "Víc lidí doma od"
         },
         "data_description": {
           "household_signals": "Anonymní signály, které zapnuté znamenají „někdo je doma“ (např. televize). Neříkají kdo.",
-          "workday_entity": "Binární senzor zapnutý v pracovní dny. Bez něj jsou pracovní dny pondělí až pátek."
+          "workday_entity": "Binární senzor zapnutý v pracovní dny. Bez něj jsou pracovní dny pondělí až pátek.",
+          "multiple_min": "Kolik členů musí být doma, aby se zapnul „Víc lidí doma“. Host se nepočítá."
         }
       },
       "vacation": {
@@ -221,10 +223,40 @@
         }
       },
       "error": {
-        "name_exists": "Člen s tímto jménem už existuje.",
+        "name_exists": "Člen nebo skupina s tímto jménem už existuje.",
         "invalid_name": "Zadejte jméno.",
         "signal_exists": "Tato entita už je signálem člena.",
         "no_signals": "Člen potřebuje aspoň jeden signál nebo plán."
+      }
+    },
+    "group": {
+      "entry_type": "Skupina",
+      "initiate_flow": {
+        "user": "Přidat skupinu",
+        "reconfigure": "Upravit skupinu"
+      },
+      "step": {
+        "group": {
+          "title": "Skupina",
+          "description": "Pojmenovaná skupina členů, např. rodiče. Je doma, když je doma aspoň zadaný počet jejích členů.",
+          "data": {
+            "name": "Název",
+            "members": "Členové",
+            "min_count": "Aspoň doma"
+          },
+          "data_description": {
+            "min_count": "1 = stačí kdokoli ze skupiny."
+          }
+        }
+      },
+      "error": {
+        "name_exists": "Skupina nebo člen s tímto názvem už existuje.",
+        "invalid_name": "Zadejte název.",
+        "no_members_selected": "Vyberte aspoň jednoho člena.",
+        "min_count_too_high": "Počet je vyšší než počet vybraných členů."
+      },
+      "abort": {
+        "no_members": "Nejdřív přidejte členy domácnosti."
       }
     }
   },
@@ -277,6 +309,9 @@
       },
       "home": {
         "name": "Doma"
+      },
+      "multiple_home": {
+        "name": "Víc lidí doma"
       }
     },
     "sensor": {
@@ -355,7 +390,11 @@
               "last_left": "Poslední odchod",
               "long_away_started": "Začátek dlouhodobé nepřítomnosti",
               "long_away_ended": "Konec dlouhodobé nepřítomnosti",
-              "mode_changed": "Změna režimu"
+              "mode_changed": "Změna režimu",
+              "multiple_home": "Víc lidí doma",
+              "multiple_ended": "Konec: víc lidí doma",
+              "group_home": "Skupina doma",
+              "group_away": "Skupina pryč"
             }
           }
         }

@@ -1,6 +1,6 @@
 [project]
 name = "hacs-household_presence"
-version = "0.1.0"
+version = "0.2.0"
 description = "Household presence for Home Assistant: who is home, long absence and expected return."
 requires-python = ">=3.14"
 

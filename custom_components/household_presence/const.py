@@ -9,6 +9,8 @@ from typing import Final
 DOMAIN: Final = "household_presence"
 ENTITY_PREFIX: Final = "hp"
 SUBENTRY_MEMBER: Final = "member"
+SUBENTRY_GROUP: Final = "group"
+GROUP_PREFIX: Final = "group_"
 
 UPDATE_INTERVAL_S: Final = 30
 CALENDAR_REFRESH_S: Final = 900
@@ -45,6 +47,7 @@ CONF_GUEST_OFF_HOURS: Final = "guest_off_hours"
 CONF_VACATION_CALENDARS: Final = "vacation_calendars"
 CONF_VACATION_KEYWORDS: Final = "vacation_keywords"
 CONF_WORKDAY_ENTITY: Final = "workday_entity"
+CONF_MULTIPLE_MIN: Final = "multiple_min"
 CONF_HALF_LIFE_WEEKS: Final = "half_life_weeks"
 CONF_MIN_SAMPLES: Final = "min_samples"
 
@@ -73,6 +76,7 @@ DEFAULT_OPTIONS: Final[dict[str, object]] = {
     CONF_GUEST_OFF_HOURS: 24,
     CONF_VACATION_CALENDARS: [],
     CONF_VACATION_KEYWORDS: "",
+    CONF_MULTIPLE_MIN: 2,
     CONF_HALF_LIFE_WEEKS: 4,
     CONF_MIN_SAMPLES: 3,
 }
@@ -127,6 +131,10 @@ CONF_DIRECTION_ENTITY: Final = "direction_entity"
 CONF_THRESHOLD_KM: Final = "threshold_km"
 CONF_CONFIRMATIONS: Final = "confirmations"
 CONF_SPEED_KMH: Final = "speed_kmh"
+
+# Group subentry
+CONF_MEMBERS: Final = "members"
+CONF_MIN_COUNT: Final = "min_count"
 
 DEFAULT_APPROACH: Final[dict[str, object]] = {
     CONF_THRESHOLD_KM: 15,

@@ -125,6 +125,11 @@ async def async_setup_entry(
             (PersonSensor(runtime, d, member) for d in PERSON_SENSORS),
             config_subentry_id=member.member_id,
         )
+    for group in runtime.engine.groups.values():
+        async_add_entities(
+            [GroupReturnSensor(runtime, "expected_return", group)],
+            config_subentry_id=group.group_id,
+        )
 
 
 class HouseholdSensor(HouseholdPresenceEntity, SensorEntity):
@@ -173,3 +178,22 @@ class PersonSensor(HouseholdPresenceEntity, SensorEntity):
         """Return the attributes."""
         view = self.person
         return self.entity_description.attrs_fn(view) if view else {}
+
+
+class GroupReturnSensor(HouseholdPresenceEntity, SensorEntity):
+    """Nearest return of a member of the group while the group is away (FR-GRP-03)."""
+
+    _platform = "sensor"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return the expected return."""
+        view = self.group
+        return _at(view.expected_return) if view else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return source, person and confidence."""
+        view = self.group
+        return _return_attrs(view.expected_return, person=True) if view else {}

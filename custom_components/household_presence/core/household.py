@@ -245,3 +245,44 @@ def household_state(pres: Presence, long_reason: Reason | None) -> tuple[Househo
     if long_reason is not None:
         return HouseholdState.LONG_AWAY, long_reason
     return HouseholdState.AWAY, pres.reason
+
+
+def forced(mode: Mode) -> bool | None:
+    """Return the forced presence of a manual mode, None in auto (FR-MODE-01)."""
+    if mode is Mode.FORCE_HOME:
+        return True
+    if mode in (Mode.FORCE_AWAY, Mode.VACATION):
+        return False
+    return None
+
+
+@dataclass(kw_only=True)
+class Flag:
+    """On/off state with the time of its last change (multiple home, groups)."""
+
+    on: bool | None = None
+    since: datetime | None = None
+
+    def update(self, value: bool, now: datetime) -> bool:
+        """Set the value; return True on a real change (not the first value)."""
+        if self.on is value:
+            return False
+        first = self.on is None
+        self.on = value
+        self.since = now
+        return not first
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize for the Store."""
+        return {"on": self.on, "since": _iso(self.since)}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any] | None) -> Flag:
+        """Restore from the Store."""
+        if not data:
+            return cls()
+        try:
+            on = data.get("on")
+            return cls(on=on if isinstance(on, bool) else None, since=_dt(data.get("since")))
+        except ValueError, TypeError:
+            return cls()

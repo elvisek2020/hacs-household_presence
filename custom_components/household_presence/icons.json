@@ -3,49 +3,91 @@
     "binary_sensor": {
       "someone_home": {
         "default": "mdi:home-account",
-        "state": { "off": "mdi:home-outline" }
+        "state": {
+          "off": "mdi:home-outline"
+        }
       },
       "long_away": {
         "default": "mdi:bag-suitcase",
-        "state": { "off": "mdi:bag-suitcase-off-outline" }
+        "state": {
+          "off": "mdi:bag-suitcase-off-outline"
+        }
       },
       "someone_approaching": {
         "default": "mdi:home-import-outline"
       },
       "home": {
         "default": "mdi:account",
-        "state": { "off": "mdi:account-off-outline" }
+        "state": {
+          "off": "mdi:account-off-outline"
+        }
+      },
+      "multiple_home": {
+        "default": "mdi:account-multiple",
+        "state": {
+          "off": "mdi:account-multiple-outline"
+        }
       }
     },
     "sensor": {
-      "people_home": { "default": "mdi:account-group" },
-      "household_state": { "default": "mdi:home-switch-outline" },
-      "away_since": { "default": "mdi:home-export-outline" },
-      "expected_return": { "default": "mdi:home-clock-outline" },
-      "expected_return_confidence": { "default": "mdi:gauge" },
-      "expected_return_error": { "default": "mdi:timer-alert-outline" },
-      "state": { "default": "mdi:account-clock-outline" }
+      "people_home": {
+        "default": "mdi:account-group"
+      },
+      "household_state": {
+        "default": "mdi:home-switch-outline"
+      },
+      "away_since": {
+        "default": "mdi:home-export-outline"
+      },
+      "expected_return": {
+        "default": "mdi:home-clock-outline"
+      },
+      "expected_return_confidence": {
+        "default": "mdi:gauge"
+      },
+      "expected_return_error": {
+        "default": "mdi:timer-alert-outline"
+      },
+      "state": {
+        "default": "mdi:account-clock-outline"
+      }
     },
     "select": {
-      "mode": { "default": "mdi:home-edit-outline" },
-      "person_mode": { "default": "mdi:account-edit-outline" }
+      "mode": {
+        "default": "mdi:home-edit-outline"
+      },
+      "person_mode": {
+        "default": "mdi:account-edit-outline"
+      }
     },
     "switch": {
       "guest": {
         "default": "mdi:account-plus",
-        "state": { "off": "mdi:account-plus-outline" }
+        "state": {
+          "off": "mdi:account-plus-outline"
+        }
       }
     },
     "datetime": {
-      "away_until": { "default": "mdi:calendar-arrow-right" }
+      "away_until": {
+        "default": "mdi:calendar-arrow-right"
+      }
     },
     "event": {
-      "household": { "default": "mdi:bell-ring-outline" }
+      "household": {
+        "default": "mdi:bell-ring-outline"
+      }
     }
   },
   "services": {
-    "set_away_until": { "service": "mdi:calendar-arrow-right" },
-    "clear_away_until": { "service": "mdi:calendar-remove-outline" },
-    "reset_learning": { "service": "mdi:restore" }
+    "set_away_until": {
+      "service": "mdi:calendar-arrow-right"
+    },
+    "clear_away_until": {
+      "service": "mdi:calendar-remove-outline"
+    },
+    "reset_learning": {
+      "service": "mdi:restore"
+    }
   }
 }

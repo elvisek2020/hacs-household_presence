@@ -26,6 +26,7 @@ from .const import (
     EVENT_PRESENCE,
     SAVE_DELAY_S,
     STORAGE_VERSION,
+    SUBENTRY_GROUP,
     SUBENTRY_MEMBER,
     UPDATE_INTERVAL_S,
 )
@@ -35,6 +36,8 @@ from .core.model import (
     CalendarEvent,
     EntityReading,
     Event,
+    EventType,
+    GroupConfig,
     HouseholdConfig,
     MemberConfig,
     Mode,
@@ -62,15 +65,24 @@ def member_configs(entry: ConfigEntry) -> list[MemberConfig]:
     ]
 
 
+def group_configs(entry: ConfigEntry) -> list[GroupConfig]:
+    """Build group configurations from the subentries (FR-GRP-01)."""
+    return [
+        GroupConfig.from_data(sub_id, member_slug(sub.unique_id, sub.title), sub.data)
+        for sub_id, sub in entry.subentries.items()
+        if sub.subentry_type == SUBENTRY_GROUP
+    ]
+
+
 def structure_of(entry: ConfigEntry) -> tuple[Any, ...]:
     """Return what requires a reload when it changes (NFR-09)."""
     return (
         entry.title,
         tuple(
             sorted(
-                (sub_id, sub.title, sub.unique_id)
+                (sub_id, sub.subentry_type, sub.title, sub.unique_id)
                 for sub_id, sub in entry.subentries.items()
-                if sub.subentry_type == SUBENTRY_MEMBER
+                if sub.subentry_type in (SUBENTRY_MEMBER, SUBENTRY_GROUP)
             )
         ),
     )
@@ -112,7 +124,10 @@ class HouseholdPresenceRuntime:
         )
         self.structure = structure_of(entry)
         self.engine = PresenceEngine(
-            HouseholdConfig.from_options(entry.options), member_configs(entry), self.tz
+            HouseholdConfig.from_options(entry.options),
+            member_configs(entry),
+            self.tz,
+            group_configs(entry),
         )
         self.result: StepResult | None = None
         self.calendars: dict[str, CalendarData] = {}
@@ -169,7 +184,9 @@ class HouseholdPresenceRuntime:
     def apply_config(self) -> None:
         """Apply changed options or member values without a reload (NFR-09)."""
         self.engine.reconfigure(
-            HouseholdConfig.from_options(self.entry.options), member_configs(self.entry)
+            HouseholdConfig.from_options(self.entry.options),
+            member_configs(self.entry),
+            group_configs(self.entry),
         )
         self._subscribe()
         self.entry.async_create_background_task(
@@ -296,8 +313,18 @@ class HouseholdPresenceRuntime:
 
     # --- events and issues ----------------------------------------------------------------
 
-    def _member_entity_id(self, member_id: str | None) -> str | None:
+    def _event_entity_id(self, event: Event) -> str | None:
+        """Return the entity a logbook line belongs to."""
         registry = er.async_get(self.hass)
+        if event.group_id is not None:
+            return registry.async_get_entity_id(
+                "binary_sensor", DOMAIN, f"{self.entry.entry_id}_{event.group_id}_home"
+            )
+        if event.type in (EventType.MULTIPLE_HOME, EventType.MULTIPLE_ENDED):
+            return registry.async_get_entity_id(
+                "binary_sensor", DOMAIN, f"{self.entry.entry_id}_multiple_home"
+            )
+        member_id = event.member_id
         if member_id is None:
             return (
                 registry.async_get_entity_id(
@@ -318,10 +345,11 @@ class HouseholdPresenceRuntime:
                 "type": event.type.value,
                 "member": event.name,
                 "member_id": event.member_id,
+                "group_id": event.group_id,
                 "at": event.at.isoformat(),
                 "message": message,
                 "name": event.name or self.entry.title,
-                "entity_id": self._member_entity_id(event.member_id),
+                "entity_id": self._event_entity_id(event),
                 **{k: v for k, v in event.data.items() if isinstance(v, str | int | float)},
             },
         )

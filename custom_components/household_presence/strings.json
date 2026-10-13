@@ -24,7 +24,7 @@
           "night": "Night window and doors",
           "long_away": "Long absence",
           "guest": "Guest",
-          "household_signals": "Household signals and workday",
+          "household_signals": "Household: signals, workday, several people",
           "vacation": "Vacation calendars",
           "learning": "Learning"
         }
@@ -82,14 +82,16 @@
         }
       },
       "household_signals": {
-        "title": "Household signals and workday",
+        "title": "Household",
         "data": {
           "household_signals": "Household signals",
-          "workday_entity": "Workday sensor"
+          "workday_entity": "Workday sensor",
+          "multiple_min": "Several people home from"
         },
         "data_description": {
           "household_signals": "Anonymous signals that mean \"someone is home\" when on (e.g. TV). They do not say who.",
-          "workday_entity": "Binary sensor that is on on workdays. Without it Monday to Friday are workdays."
+          "workday_entity": "Binary sensor that is on on workdays. Without it Monday to Friday are workdays.",
+          "multiple_min": "How many members have to be home for \"Several people home\". The guest does not count."
         }
       },
       "vacation": {
@@ -221,10 +223,40 @@
         }
       },
       "error": {
-        "name_exists": "A member with this name already exists.",
+        "name_exists": "A member or group with this name already exists.",
         "invalid_name": "Enter a name.",
         "signal_exists": "This entity is already a signal of the member.",
         "no_signals": "The member needs at least one signal or a plan."
+      }
+    },
+    "group": {
+      "entry_type": "Group",
+      "initiate_flow": {
+        "user": "Add group",
+        "reconfigure": "Edit group"
+      },
+      "step": {
+        "group": {
+          "title": "Group",
+          "description": "A named group of members, e.g. parents. It is home when at least the given number of its members is home.",
+          "data": {
+            "name": "Name",
+            "members": "Members",
+            "min_count": "At least home"
+          },
+          "data_description": {
+            "min_count": "1 = anybody of the group."
+          }
+        }
+      },
+      "error": {
+        "name_exists": "A group or member with this name already exists.",
+        "invalid_name": "Enter a name.",
+        "no_members_selected": "Select at least one member.",
+        "min_count_too_high": "The number is higher than the number of selected members."
+      },
+      "abort": {
+        "no_members": "Add household members first."
       }
     }
   },
@@ -277,6 +309,9 @@
       },
       "home": {
         "name": "Home"
+      },
+      "multiple_home": {
+        "name": "Several people home"
       }
     },
     "sensor": {
@@ -355,7 +390,11 @@
               "last_left": "Last left",
               "long_away_started": "Long absence started",
               "long_away_ended": "Long absence ended",
-              "mode_changed": "Mode changed"
+              "mode_changed": "Mode changed",
+              "multiple_home": "Several people home",
+              "multiple_ended": "Several people home ended",
+              "group_home": "Group home",
+              "group_away": "Group away"
             }
           }
         }

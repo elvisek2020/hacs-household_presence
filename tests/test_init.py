@@ -275,6 +275,7 @@ async def test_diagnostics_redact_names(
     assert SCHOOL not in text
     assert data["household"]["someone_home"] is True
     assert "_household" in data["learning"]
+    assert data["groups"] == {}
 
 
 async def test_unload(hass: HomeAssistant, config_entry: MockConfigEntry, fake_calendar) -> None:
@@ -297,3 +298,33 @@ async def test_failed_calendar_is_retried(
     await _wait(hass, freezer, 1.5)
     assert runtime.calendars[SCHOOL].ok
     assert len(runtime.calendars[SCHOOL].events) == 1
+
+
+async def test_integration_reload_during_plan_is_not_an_arrival(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+    fake_calendar,
+) -> None:
+    freezer.move_to("2026-10-12 06:00:00+02:00")
+    start = dt_util.parse_datetime("2026-10-12 08:00:00+02:00")
+    fake_calendar(SCHOOL, start, start + timedelta(hours=4))
+    hass.states.async_set(GPS, "home")
+    hass.states.async_set(PC, "on")
+    await setup_entry(hass, config_entry)
+    await _wait(hass, freezer, 3 * 60)
+    assert hass.states.get("binary_sensor.hp_kid_home").state == "off"
+    # The integration providing the signal reloads: unavailable, then on again.
+    hass.states.async_set(PC, "unavailable")
+    await _wait(hass, freezer, 0.5)
+    hass.states.async_set(PC, "on")
+    await _wait(hass, freezer, 30)
+    assert hass.states.get("binary_sensor.hp_kid_home").state == "off"
+    # The memory survives a reload of this integration too.
+    assert await hass.config_entries.async_reload(config_entry.entry_id)
+    await hass.async_block_till_done()
+    hass.states.async_set(PC, "unavailable")
+    await _wait(hass, freezer, 0.5)
+    hass.states.async_set(PC, "on")
+    await _wait(hass, freezer, 10)
+    assert hass.states.get("binary_sensor.hp_kid_home").state == "off"

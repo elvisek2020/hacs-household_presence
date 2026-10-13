@@ -74,12 +74,19 @@ U signálu lze dále nastavit:
 
 - Mezery mezi událostmi do 45 min se překlenou (přestávky).
 - Předstih (20 min) a dojezd (30 min) pokryjí cestu tam a zpět.
-- Signál, který svítí už od začátku plánu a nezměnil se, se ignoruje. Typicky je to počítač zapnutý přes noc. Když se signál během plánu zapne (dítě je nemocné a zapne počítač), člen je doma.
+- Signál, který svítí už od začátku plánu a nezměnil se, se ignoruje. Typicky je to počítač zapnutý přes noc. Krátký výpadek (např. reload integrace UniFi: `unavailable` a zpět na stejný stav) se za změnu nepočítá, a to ani po restartu HA. Když se signál během plánu zapne (dítě je nemocné a zapne počítač), člen je doma.
 - Konec plánu je očekávaný návrat. Člen s volbou „držet poslední stav“ se po konci plánu bere jako doma.
 
 #### Blížení
 
 Volitelně lze zadat entitu vzdálenosti od domova a entitu směru (např. z vestavěné integrace **Proximity**). Když vzdálenost klesá pod práh, `binary_sensor.hp_someone_approaching` se zapne a vznikne odhad příchodu.
+
+### Skupiny
+
+Skupina (**Přidat skupinu**) je pojmenovaný výběr členů, třeba „Rodiče“. Je doma, když je doma aspoň zadaný počet jejích členů. Hodnota 1 znamená, že stačí kdokoli ze skupiny.
+
+- Vznikne `binary_sensor.hp_group_<název>_home` (atributy `count`, `people`, `since`) a `sensor.hp_group_<název>_expected_return`: nejbližší návrat člena skupiny, když skupina doma není. Hodí se pro předtápění společných místností.
+- Chová se stejně jako „někdo doma“: člen ve stavu *právě odešel* se počítá jako doma až do konce zpoždění odchodu a ruční režim domácnosti má přednost.
 
 ### Domácnost
 
@@ -89,7 +96,7 @@ V **Možnostech** integrace najdete:
 - **Noční okno a dveře** (22:00–7:00): telefony v noci uspávají Wi-Fi. V nočním okně člen neodejde jen proto, že zhasly signály „jen doma“. Odchod potvrdí změna vstupních dveří.
 - **Dlouhodobá nepřítomnost:** viz níže.
 - **Host:** automatické vypnutí v čase nebo po několika hodinách.
-- **Signály domácnosti:** anonymní signály „někdo je doma“ (např. televize) a senzor pracovního dne pro učení.
+- **Domácnost:** anonymní signály „někdo je doma“ (např. televize), senzor pracovního dne pro učení a práh pro „víc lidí doma“ (výchozí 2 členové, host se nepočítá).
 - **Kalendáře dovolené:** událost s klíčovým slovem (např. `dovolená, chata`) znamená, že je pryč celá domácnost.
 - **Učení:** poločas zapomínání a minimum dnů.
 
@@ -117,6 +124,7 @@ V **Možnostech** integrace najdete:
 | Entita | Stav |
 |---|---|
 | `binary_sensor.hp_someone_home` | on = někdo doma. Atributy `count`, `people`, `since` |
+| `binary_sensor.hp_multiple_home` | on = doma je aspoň nastavený počet členů (výchozí 2). Atributy `count`, `people`, `min` |
 | `binary_sensor.hp_long_away` | on = dlouhodobě pryč, atribut `reason` |
 | `binary_sensor.hp_someone_approaching` | on = někdo míří domů |
 | `sensor.hp_people_home` | počet členů doma (host se nepočítá) |
@@ -128,7 +136,7 @@ V **Možnostech** integrace najdete:
 | `select.hp_mode` | `auto`, `force_home`, `force_away`, `vacation` |
 | `switch.hp_guest` | host doma |
 | `datetime.hp_away_until` | plánovaný návrat celé domácnosti |
-| `event.hp_household` | `arrived`, `left`, `first_arrived`, `last_left`, `long_away_started`, `long_away_ended`, `mode_changed` |
+| `event.hp_household` | `arrived`, `left`, `first_arrived`, `last_left`, `long_away_started`, `long_away_ended`, `mode_changed`, `multiple_home`, `multiple_ended`, `group_home`, `group_away` |
 
 **Člen** (`<jméno>` = jméno bez diakritiky a mezer):
 
@@ -139,6 +147,13 @@ V **Možnostech** integrace najdete:
 | `sensor.hp_<jméno>_expected_return` | očekávaný návrat člena |
 | `select.hp_<jméno>_mode` | `auto`, `force_home`, `force_away` |
 | `datetime.hp_<jméno>_away_until` | plánovaný návrat člena |
+
+**Skupina** (`<název>` = název bez diakritiky a mezer):
+
+| Entita | Stav |
+|---|---|
+| `binary_sensor.hp_group_<název>_home` | on = doma je aspoň zadaný počet členů skupiny. Atributy `count`, `people`, `since` |
+| `sensor.hp_group_<název>_expected_return` | nejbližší návrat člena skupiny, když skupina doma není |
 
 **Pravidla:**
 - `expected_return` je `unknown`, když nikdo nic neví, a nikdy není v minulosti.
@@ -165,7 +180,7 @@ Přednost má plán, pak blížení, pak naučený odhad.
 
 ## Deník, opravy a diagnostika
 
-- **Deník:** zápisy jako „Příchod: Jana“, „Nikdo doma od 7:42“, „Dlouhodobě pryč: dovolená do neděle 18. 10. 18:00“. Stejné události jdou na sběrnici jako `household_presence_event`.
+- **Deník:** zápisy jako „Příchod: Jana“, „Nikdo doma od 7:42“, „Dlouhodobě pryč: dovolená do neděle 18. 10. 18:00“, „Víc lidí doma (2)“, „Skupina Rodiče: doma“. Stejné události jdou na sběrnici jako `household_presence_event`.
 - **Opravy (repairs):** chybějící signál, zaseknutý signál, nedostupný kalendář, člen bez signálů, člen, který nikdy nemůže odejít.
 - **Diagnostika:** stav signálů a členů, naučené tabulky, metriky přesnosti. Jména a kalendáře jsou skryté.
 

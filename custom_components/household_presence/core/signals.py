@@ -1,7 +1,9 @@
 """Interpretation of signal entities (FR-SIG-01..08)."""
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, replace
 from datetime import datetime, time
+from typing import Any
 
 from .model import EntityReading, Reading, SignalConfig, SignalKind, SignalView, in_window
 
@@ -88,3 +90,56 @@ def evaluate(
             **base,
         )
     return SignalEval(value=Reading.HOME, **base)
+
+
+@dataclass(kw_only=True)
+class _Remembered:
+    state: str
+    changed: datetime
+
+
+class SignalMemory:
+    """Last available value of each signal and when it really changed.
+
+    Home Assistant moves ``last_changed`` on ``home → unavailable → home`` (an
+    integration reload, a short outage). Such a round trip is not a change, so
+    the plan hold, ``max_on`` and ``arrival_delay`` use the remembered time
+    (FR-SIG-09). The memory survives restarts in the Store.
+    """
+
+    def __init__(self) -> None:
+        """Initialize an empty memory."""
+        self._items: dict[str, _Remembered] = {}
+
+    def effective(self, entity_id: str, reading: EntityReading | None) -> EntityReading | None:
+        """Return the reading with the time of its last real change."""
+        if reading is None or not reading.available:
+            return reading
+        item = self._items.get(entity_id)
+        if item is None or item.state.casefold() != reading.state.casefold():
+            self._items[entity_id] = _Remembered(state=reading.state, changed=reading.last_changed)
+            return reading
+        if item.changed == reading.last_changed:
+            return reading
+        return replace(reading, last_changed=item.changed)
+
+    def keep(self, entity_ids: set[str]) -> None:
+        """Forget entities that are no longer watched."""
+        self._items = {k: v for k, v in self._items.items() if k in entity_ids}
+
+    def to_dict(self) -> dict[str, dict[str, str]]:
+        """Serialize for the Store."""
+        return {
+            k: {"state": v.state, "changed": v.changed.isoformat()} for k, v in self._items.items()
+        }
+
+    def restore(self, data: Mapping[str, Any] | None) -> None:
+        """Restore from the Store, invalid items are skipped."""
+        self._items = {}
+        for entity_id, item in (data or {}).items():
+            try:
+                self._items[entity_id] = _Remembered(
+                    state=str(item["state"]), changed=datetime.fromisoformat(item["changed"])
+                )
+            except KeyError, TypeError, ValueError:
+                continue

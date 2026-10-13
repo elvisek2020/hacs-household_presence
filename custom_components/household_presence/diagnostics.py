@@ -56,6 +56,9 @@ async def async_get_config_entry_diagnostics(
         "persons": (
             {mid: _plain(asdict(view)) for mid, view in result.persons.items()} if result else None
         ),
+        "groups": (
+            {gid: _plain(asdict(view)) for gid, view in result.groups.items()} if result else None
+        ),
         "problems": [p.kind for p in result.problems] if result else [],
         "calendar_cache": {
             "fetched_at": _plain(runtime.calendars_fetched_at),

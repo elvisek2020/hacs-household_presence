@@ -122,6 +122,10 @@ class EventType(StrEnum):
     LONG_AWAY_STARTED = "long_away_started"
     LONG_AWAY_ENDED = "long_away_ended"
     MODE_CHANGED = "mode_changed"
+    MULTIPLE_HOME = "multiple_home"
+    MULTIPLE_ENDED = "multiple_ended"
+    GROUP_HOME = "group_home"
+    GROUP_AWAY = "group_away"
 
 
 # --- helpers ------------------------------------------------------------------
@@ -341,6 +345,29 @@ class MemberConfig:
 
 
 @dataclass(frozen=True, kw_only=True)
+class GroupConfig:
+    """Named group of members (config subentry ``group``, FR-GRP-01)."""
+
+    group_id: str
+    name: str
+    slug: str
+    members: tuple[str, ...]
+    min_count: int = 1
+
+    @classmethod
+    def from_data(cls, group_id: str, slug: str, data: Mapping[str, Any]) -> GroupConfig:
+        """Build from subentry data."""
+        members = tuple(str(m) for m in data.get(c.CONF_MEMBERS) or ())
+        return cls(
+            group_id=group_id,
+            name=str(data.get(c.CONF_NAME) or slug),
+            slug=slug,
+            members=members,
+            min_count=max(1, int(data.get(c.CONF_MIN_COUNT, 1))),
+        )
+
+
+@dataclass(frozen=True, kw_only=True)
 class HouseholdConfig:
     """Options of the household (main config entry)."""
 
@@ -362,6 +389,7 @@ class HouseholdConfig:
     vacation_calendars: tuple[str, ...] = ()
     vacation_keywords: tuple[str, ...] = ()
     workday_entity: str | None = None
+    multiple_min: int = 2
     half_life_weeks: float = 4.0
     min_samples: int = 3
 
@@ -398,6 +426,7 @@ class HouseholdConfig:
             vacation_calendars=tuple(o[c.CONF_VACATION_CALENDARS] or ()),
             vacation_keywords=split_keywords(o[c.CONF_VACATION_KEYWORDS]),
             workday_entity=o.get(c.CONF_WORKDAY_ENTITY) or None,
+            multiple_min=max(1, int(o[c.CONF_MULTIPLE_MIN])),
             half_life_weeks=max(0.5, float(o[c.CONF_HALF_LIFE_WEEKS])),
             min_samples=max(1, int(o[c.CONF_MIN_SAMPLES])),
         )
@@ -476,6 +505,7 @@ class Event:
     at: datetime
     member_id: str | None = None
     name: str | None = None
+    group_id: str | None = None
     data: Mapping[str, Any] = field(default_factory=dict)
 
 
@@ -554,6 +584,21 @@ class HouseholdView:
     guest: bool
     away_until: datetime | None
     last_return_error: float | None
+    multiple_home: bool = False
+    multiple_min: int = 2
+
+
+@dataclass(frozen=True, kw_only=True)
+class GroupView:
+    """Output of one group for the entities (FR-GRP-02)."""
+
+    group_id: str
+    name: str
+    home: bool
+    count: int
+    people: tuple[str, ...]
+    since: datetime | None
+    expected_return: ExpectedReturn | None
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -562,5 +607,6 @@ class StepResult:
 
     household: HouseholdView
     persons: Mapping[str, PersonView]
+    groups: Mapping[str, GroupView] = field(default_factory=dict)
     events: Sequence[Event] = ()
     problems: Sequence[Problem] = ()

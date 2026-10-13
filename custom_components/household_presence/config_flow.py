@@ -135,6 +135,7 @@ def _signals_schema(o: Mapping[str, Any]) -> vol.Schema:
         {
             _required(c.CONF_HOUSEHOLD_SIGNALS, o, []): _entity(multiple=True),
             _optional(c.CONF_WORKDAY_ENTITY, o): _entity("binary_sensor"),
+            _required(c.CONF_MULTIPLE_MIN, o, 2): _number(1, 20, 1),
         }
     )
 
@@ -208,7 +209,10 @@ class HouseholdPresenceConfigFlow(ConfigFlow, domain=c.DOMAIN):
         cls, config_entry: ConfigEntry
     ) -> dict[str, type[ConfigSubentryFlow]]:
         """Members are subentries."""
-        return {c.SUBENTRY_MEMBER: MemberSubentryFlowHandler}
+        return {
+            c.SUBENTRY_MEMBER: MemberSubentryFlowHandler,
+            c.SUBENTRY_GROUP: GroupSubentryFlowHandler,
+        }
 
 
 class HouseholdPresenceOptionsFlow(OptionsFlow):
@@ -354,9 +358,7 @@ class MemberSubentryFlowHandler(ConfigSubentryFlow):
         entry = self._get_entry()
         own = None if self.source == SOURCE_USER else self._reconfigure_subentry_id
         return any(
-            sub.unique_id == slug
-            for sub_id, sub in entry.subentries.items()
-            if sub.subentry_type == c.SUBENTRY_MEMBER and sub_id != own
+            sub.unique_id == slug for sub_id, sub in entry.subentries.items() if sub_id != own
         )
 
     async def async_step_member(
@@ -518,3 +520,80 @@ class MemberSubentryFlowHandler(ConfigSubentryFlow):
             data=self._data,
             unique_id=slug,
         )
+
+
+# --- group subentry ------------------------------------------------------------------
+
+
+class GroupSubentryFlowHandler(ConfigSubentryFlow):
+    """Add or edit a named group of members (FR-GRP-01)."""
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> SubentryFlowResult:
+        """Add a group."""
+        return await self.async_step_group(user_input)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Edit a group."""
+        return await self.async_step_group(user_input)
+
+    def _members(self) -> list[sel.SelectOptionDict]:
+        return [
+            sel.SelectOptionDict(value=sub_id, label=sub.title)
+            for sub_id, sub in self._get_entry().subentries.items()
+            if sub.subentry_type == c.SUBENTRY_MEMBER
+        ]
+
+    async def async_step_group(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Name, members and the minimum number of members at home."""
+        editing = self.source != SOURCE_USER
+        current = dict(self._get_reconfigure_subentry().data) if editing else {}
+        members = self._members()
+        if not members:
+            return self.async_abort(reason="no_members")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            name = str(user_input[c.CONF_NAME]).strip()
+            unique_id = f"{c.GROUP_PREFIX}{slugify(name)}"
+            chosen = list(user_input.get(c.CONF_MEMBERS) or [])
+            min_count = int(user_input.get(c.CONF_MIN_COUNT, 1))
+            own = self._reconfigure_subentry_id if editing else None
+            if not slugify(name):
+                errors[c.CONF_NAME] = "invalid_name"
+            elif any(
+                sub.unique_id == unique_id
+                for sub_id, sub in self._get_entry().subentries.items()
+                if sub_id != own
+            ):
+                errors[c.CONF_NAME] = "name_exists"
+            elif not chosen:
+                errors[c.CONF_MEMBERS] = "no_members_selected"
+            elif min_count > len(chosen):
+                errors[c.CONF_MIN_COUNT] = "min_count_too_high"
+            else:
+                data = {c.CONF_NAME: name, c.CONF_MEMBERS: chosen, c.CONF_MIN_COUNT: min_count}
+                if not editing:
+                    return self.async_create_entry(title=name, data=data, unique_id=unique_id)
+                return self.async_update_and_abort(
+                    self._get_entry(),
+                    self._get_reconfigure_subentry(),
+                    title=name,
+                    data=data,
+                    unique_id=unique_id,
+                )
+            current = {**current, **user_input}
+        schema = vol.Schema(
+            {
+                vol.Required(c.CONF_NAME, default=current.get(c.CONF_NAME, "")): _TEXT,
+                vol.Required(c.CONF_MEMBERS, default=current.get(c.CONF_MEMBERS, [])): (
+                    sel.SelectSelector(sel.SelectSelectorConfig(options=members, multiple=True))
+                ),
+                vol.Required(c.CONF_MIN_COUNT, default=current.get(c.CONF_MIN_COUNT, 1)): _number(
+                    1, 20, 1
+                ),
+            }
+        )
+        return self.async_show_form(step_id="group", data_schema=schema, errors=errors)

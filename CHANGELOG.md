@@ -5,6 +5,20 @@ text vydání na GitHubu — a ten Home Assistant / HACS ukazuje v okně aktuali
 
 Nejnovější verze je nahoře.
 
+## v0.2.0 — 2026-10-13
+
+### ✨ Novinky
+
+- **Víc lidí doma:** `binary_sensor.hp_multiple_home` je zapnutý, když je doma aspoň nastavený počet členů (výchozí 2, Možnosti → Domácnost). Host se nepočítá.
+- **Skupiny členů:** nový typ položky „Skupina“ (název, členové, kolik jich musí být doma). Vytvoří `binary_sensor.hp_group_<název>_home` a `sensor.hp_group_<název>_expected_return` s nejbližším návratem člena skupiny.
+- Ruční režim domácnosti má přednost i před skupinami a počtem lidí. Deník zapisuje „Víc lidí doma“ a „Skupina …: doma / pryč“.
+
+### 🐛 Opravy
+
+- Krátký výpadek signálu (např. reload integrace UniFi: `unavailable` a zpět) už během plánu neznamená falešný příchod. Výpadek neposouvá ani zpoždění příchodu a dobu zaseknutí. Integrace si to pamatuje i přes restart.
+
+Po aktualizaci restartuj Home Assistant.
+
 ## v0.1.0 — 2026-10-12
 
 ### ✨ Novinky

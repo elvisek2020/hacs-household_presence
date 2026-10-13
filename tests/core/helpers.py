@@ -13,6 +13,8 @@ from custom_components.household_presence.core.model import (
     EntityReading,
     Event,
     EventType,
+    GroupConfig,
+    GroupView,
     HouseholdConfig,
     MemberConfig,
     PersonView,
@@ -50,17 +52,27 @@ class House:
         *,
         now: datetime = T0,
         grace: bool = False,
+        groups: Iterable[Mapping[str, Any]] = (),
     ) -> None:
         """Create the house; the startup grace is off unless asked for."""
         opts = {c.CONF_STARTUP_GRACE: 5 if grace else 0, **(options or {})}
         self.options = opts
         self.member_data = [dict(m) for m in members]
+        self.group_data = [dict(g) for g in groups]
         self.now = now
         self.states: dict[str, tuple[str, datetime, dict[str, Any]]] = {}
         self.calendars: dict[str, CalendarData] = {}
         self.events: list[Event] = []
         self.result: StepResult | None = None
-        self.engine = PresenceEngine(HouseholdConfig.from_options(opts), self._configs(), TZ)
+        self.engine = PresenceEngine(
+            HouseholdConfig.from_options(opts), self._configs(), TZ, self._groups()
+        )
+
+    def _groups(self) -> list[GroupConfig]:
+        return [
+            GroupConfig.from_data(g[c.CONF_NAME].lower(), g[c.CONF_NAME].lower(), g)
+            for g in self.group_data
+        ]
 
     def _configs(self) -> list[MemberConfig]:
         return [
@@ -133,7 +145,7 @@ class House:
         """Simulate a restart: serialize, create a new engine and restore."""
         data = self.engine.to_dict()
         self.engine = PresenceEngine(
-            HouseholdConfig.from_options(self.options), self._configs(), TZ
+            HouseholdConfig.from_options(self.options), self._configs(), TZ, self._groups()
         )
         self.engine.restore(data)
 
@@ -143,6 +155,11 @@ class House:
         """Return the view of a member."""
         assert self.result is not None
         return self.result.persons[name.lower()]
+
+    def group(self, name: str) -> GroupView:
+        """Return the view of a group."""
+        assert self.result is not None
+        return self.result.groups[name.lower()]
 
     @property
     def hh(self):

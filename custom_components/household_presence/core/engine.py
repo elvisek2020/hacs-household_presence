@@ -1,6 +1,7 @@
 """Presence engine: one step turns a Snapshot into the household view (NFR-04)."""
 
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from datetime import datetime, tzinfo
 from typing import Any
 
@@ -13,6 +14,8 @@ from .model import (
     Event,
     EventType,
     ExpectedReturn,
+    GroupConfig,
+    GroupView,
     HouseholdConfig,
     HouseholdView,
     Mode,
@@ -26,7 +29,7 @@ from .model import (
 )
 from .plan import Block, active_block, active_event, build_blocks, collect
 from .returns import household_return, person_return
-from .signals import SignalEval, evaluate
+from .signals import SignalEval, SignalMemory, evaluate
 
 HOUSEHOLD_KEY = "_household"
 
@@ -39,6 +42,7 @@ class PresenceEngine:
         household: HouseholdConfig,
         members: Sequence[per.MemberConfig],
         tz: tzinfo,
+        groups: Sequence[GroupConfig] = (),
     ) -> None:
         """Initialize the engine."""
         self.tz = tz
@@ -58,11 +62,20 @@ class PresenceEngine:
         # Last known prediction of the running absence, used for the error metric.
         self._predictions: dict[str, ExpectedReturn] = {}
         self._signals: dict[str, list[SignalEval]] = {}
-        self.reconfigure(household, members)
+        self.memory = SignalMemory()
+        self.groups: dict[str, GroupConfig] = {}
+        self.group_flags: dict[str, hh.Flag] = {}
+        self.multiple = hh.Flag()
+        self.reconfigure(household, members, groups)
 
     # --- configuration ------------------------------------------------------------
 
-    def reconfigure(self, household: HouseholdConfig, members: Sequence[per.MemberConfig]) -> None:
+    def reconfigure(
+        self,
+        household: HouseholdConfig,
+        members: Sequence[per.MemberConfig],
+        groups: Sequence[GroupConfig] = (),
+    ) -> None:
         """Apply a new configuration and keep the runtime state of known members."""
         self.config = household
         self.learner.half_life_weeks = household.half_life_weeks
@@ -74,6 +87,8 @@ class PresenceEngine:
             for mid, m in self.members.items()
             if m.approach is not None
         }
+        self.groups = {g.group_id: g for g in groups}
+        self.group_flags = {gid: self.group_flags.get(gid) or hh.Flag() for gid in self.groups}
 
     def watched_entities(self) -> set[str]:
         """Return entities whose change should trigger a step."""
@@ -137,6 +152,7 @@ class PresenceEngine:
 
     def step(self, snap: Snapshot) -> StepResult:
         """Evaluate everything for ``snap.now``."""
+        snap = self._effective(snap)
         cfg = self.config
         now = snap.now
         local_dt = now.astimezone(self.tz)
@@ -287,6 +303,7 @@ class PresenceEngine:
             )
         events.extend(long_events)
 
+        multiple_view, groups_view = self._groups(returns, now, events)
         self._learn(events, before, now, workday, vacation_event)
         self._remember_predictions(returns, expected, pres.someone_home)
         state, reason = hh.household_state(pres, long_reason)
@@ -309,10 +326,13 @@ class PresenceEngine:
             guest=self.household.guest,
             away_until=self.household.away_until,
             last_return_error=self.last_errors.get(HOUSEHOLD_KEY),
+            multiple_home=multiple_view,
+            multiple_min=cfg.multiple_min,
         )
         result = StepResult(
             household=view,
             persons=persons_view,
+            groups=groups_view,
             events=sorted(events, key=lambda e: e.at),
             problems=list(problems.values()),
         )
@@ -320,6 +340,72 @@ class PresenceEngine:
         return result
 
     # --- step helpers ---------------------------------------------------------------------
+
+    def _groups(
+        self,
+        returns: Mapping[str, ExpectedReturn | None],
+        now: datetime,
+        events: list[Event],
+    ) -> tuple[bool, dict[str, GroupView]]:
+        """Several people home and named groups (FR-HH-07, FR-GRP-02)."""
+        override = hh.forced(self.household.mode)
+        home = [mid for mid, rt in self.persons.items() if rt.is_home]
+        multiple = override if override is not None else len(home) >= self.config.multiple_min
+        if self.multiple.update(multiple, now):
+            events.append(
+                Event(
+                    type=EventType.MULTIPLE_HOME if multiple else EventType.MULTIPLE_ENDED,
+                    at=now,
+                    data={"count": len(home), "min": self.config.multiple_min},
+                )
+            )
+        views: dict[str, GroupView] = {}
+        for gid, group in self.groups.items():
+            present = [m for m in group.members if m in self.persons and m in home]
+            on = override if override is not None else len(present) >= group.min_count
+            flag = self.group_flags[gid]
+            if flag.update(on, now):
+                events.append(
+                    Event(
+                        type=EventType.GROUP_HOME if on else EventType.GROUP_AWAY,
+                        at=now,
+                        name=group.name,
+                        group_id=gid,
+                        data={"count": len(present)},
+                    )
+                )
+            expected = None
+            if not on:
+                candidates = [r for m in group.members if (r := returns.get(m)) is not None]
+                expected = min(candidates, key=lambda r: r.at, default=None)
+            views[gid] = GroupView(
+                group_id=gid,
+                name=group.name,
+                home=on,
+                count=len(present),
+                people=tuple(self.members[m].name for m in present),
+                since=flag.since,
+                expected_return=expected,
+            )
+        return multiple, views
+
+    def _signal_entities(self) -> set[str]:
+        entities = set(self.config.door_entities)
+        entities.update(s.entity_id for s in self.config.household_signals)
+        for member in self.members.values():
+            entities.update(s.entity_id for s in member.signals)
+        return entities
+
+    def _effective(self, snap: Snapshot) -> Snapshot:
+        """Replace last_changed of signals by the time of their last real change."""
+        signals = self._signal_entities()
+        self.memory.keep(signals)
+        entities = dict(snap.entities)
+        for entity_id in signals:
+            reading = self.memory.effective(entity_id, entities.get(entity_id))
+            if reading is not None:
+                entities[entity_id] = reading
+        return replace(snap, entities=entities)
 
     def _plan_block(
         self,
@@ -502,6 +588,9 @@ class PresenceEngine:
             "household": self.household.to_dict(),
             "learning": self.learner.to_dict(),
             "last_errors": dict(self.last_errors),
+            "signals": self.memory.to_dict(),
+            "multiple": self.multiple.to_dict(),
+            "groups": {gid: f.to_dict() for gid, f in self.group_flags.items()},
         }
 
     def restore(self, data: Mapping[str, Any] | None) -> None:
@@ -514,6 +603,10 @@ class PresenceEngine:
                 self.persons[mid] = per.PersonRuntime.from_dict(persons[mid])
         self.household = hh.HouseholdRuntime.from_dict(data.get("household") or {})
         self.learner.restore(data.get("learning") or {})
+        self.memory.restore(data.get("signals"))
+        self.multiple = hh.Flag.from_dict(data.get("multiple"))
+        groups = data.get("groups") or {}
+        self.group_flags = {gid: hh.Flag.from_dict(groups.get(gid)) for gid in self.groups}
         self.learner.forget([*self.members, HOUSEHOLD_KEY])
         self.last_errors = {
             k: float(v)

@@ -20,11 +20,20 @@ async def async_setup_entry(
     """Set up the binary sensors."""
     runtime = entry.runtime_data
     async_add_entities(
-        [SomeoneHomeSensor(runtime), LongAwaySensor(runtime), SomeoneApproachingSensor(runtime)]
+        [
+            SomeoneHomeSensor(runtime),
+            MultipleHomeSensor(runtime),
+            LongAwaySensor(runtime),
+            SomeoneApproachingSensor(runtime),
+        ]
     )
     for member in runtime.engine.members.values():
         async_add_entities(
             [MemberHomeSensor(runtime, "home", member)], config_subentry_id=member.member_id
+        )
+    for group in runtime.engine.groups.values():
+        async_add_entities(
+            [GroupHomeSensor(runtime, "home", group)], config_subentry_id=group.group_id
         )
 
 
@@ -55,6 +64,30 @@ class SomeoneHomeSensor(_Base):
         if view is None:
             return {}
         return {"count": view.count, "people": list(view.people), "since": iso(view.since)}
+
+
+class MultipleHomeSensor(_Base):
+    """At least N members are home (FR-HH-07)."""
+
+    _attr_device_class = BinarySensorDeviceClass.PRESENCE
+
+    def __init__(self, runtime) -> None:
+        """Initialize."""
+        super().__init__(runtime, "multiple_home")
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True when enough members are home."""
+        view = self.household
+        return view.multiple_home if view else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return count, people and the threshold."""
+        view = self.household
+        if view is None:
+            return {}
+        return {"count": view.count, "people": list(view.people), "min": view.multiple_min}
 
 
 class LongAwaySensor(_Base):
@@ -120,3 +153,24 @@ class MemberHomeSensor(_Base):
             "sources": list(view.sources),
             "method": view.method.value,
         }
+
+
+class GroupHomeSensor(_Base):
+    """A group of members is home (FR-GRP-02)."""
+
+    _attr_device_class = BinarySensorDeviceClass.PRESENCE
+    _unrecorded_attributes = frozenset({"since"})
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return True when the group is home."""
+        view = self.group
+        return view.home if view else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return count, people and since."""
+        view = self.group
+        if view is None:
+            return {}
+        return {"count": view.count, "people": list(view.people), "since": iso(view.since)}
