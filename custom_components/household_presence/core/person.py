@@ -44,6 +44,8 @@ class PersonRuntime:
     manual_set_at: datetime | None = None
     away_until: datetime | None = None
     unavailable_since: datetime | None = None
+    last_arrived: datetime | None = None
+    last_left: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize for the Store."""
@@ -58,6 +60,8 @@ class PersonRuntime:
             "manual_set_at": _iso(self.manual_set_at),
             "away_until": _iso(self.away_until),
             "unavailable_since": _iso(self.unavailable_since),
+            "last_arrived": _iso(self.last_arrived),
+            "last_left": _iso(self.last_left),
         }
 
     @classmethod
@@ -75,6 +79,8 @@ class PersonRuntime:
                 manual_set_at=_dt(data.get("manual_set_at")),
                 away_until=_dt(data.get("away_until")),
                 unavailable_since=_dt(data.get("unavailable_since")),
+                last_arrived=_dt(data.get("last_arrived")),
+                last_left=_dt(data.get("last_left")),
             )
         except ValueError, TypeError:
             return cls()
@@ -225,6 +231,7 @@ def _to_home(
         rt.state = PersonState.JUST_ARRIVED
         rt.arrived_at = now
         rt.since = now
+        rt.last_arrived = now
         result.events.append(_event(cfg, EventType.ARRIVED, now, method))
     elif rt.state is PersonState.UNKNOWN:
         rt.state = PersonState.HOME
@@ -242,6 +249,7 @@ def _to_away_now(
 ) -> None:
     now = ctx.now
     if rt.state in HOME_LIKE:
+        rt.last_left = now
         result.events.append(_event(cfg, EventType.LEFT, now, Method.MANUAL))
     if rt.state is not PersonState.AWAY:
         rt.state = PersonState.AWAY
@@ -284,6 +292,7 @@ def _to_away_delayed(
             rt.left_at = None
             rt.method = method
             rt.sources = ()
+            rt.last_left = left_at
             result.events.append(_event(cfg, EventType.LEFT, left_at, method))
         elif ctx.night is not None and not ctx.night.contains(ctx.local):
             # The night is over and the signals did not come back: start the

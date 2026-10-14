@@ -130,6 +130,8 @@ V **Možnostech** integrace najdete:
 | `sensor.hp_people_home` | počet členů doma (host se nepočítá) |
 | `sensor.hp_household_state` | `home`, `away`, `long_away`, atribut `reason` |
 | `sensor.hp_away_since` | od kdy je nikdo doma |
+| `sensor.hp_someone_home_since` | kdy se naposledy změnilo „někdo doma“ |
+| `sensor.hp_multiple_home_since` | kdy se naposledy změnilo „víc lidí doma“ |
 | `sensor.hp_expected_return` | nejbližší očekávaný návrat, atributy `source` (`planned`, `approaching`, `learned`), `person`, `confidence` (0–1) |
 | `sensor.hp_expected_return_confidence` | jistota odhadu v % |
 | `sensor.hp_expected_return_error` | chyba posledního odhadu v minutách |
@@ -145,6 +147,9 @@ V **Možnostech** integrace najdete:
 | `binary_sensor.hp_<jméno>_home` | on = doma. Atributy `since`, `sources`, `method` (`signal`, `plan`, `manual`) |
 | `sensor.hp_<jméno>_state` | `home`, `just_arrived`, `just_left`, `away`, `unknown` |
 | `sensor.hp_<jméno>_expected_return` | očekávaný návrat člena |
+| `sensor.hp_<jméno>_since` | skutečný čas poslední změny doma / pryč (stejný jako atribut `since`) |
+| `sensor.hp_<jméno>_last_arrived` | čas posledního příchodu |
+| `sensor.hp_<jméno>_last_left` | čas posledního odchodu |
 | `select.hp_<jméno>_mode` | `auto`, `force_home`, `force_away` |
 | `datetime.hp_<jméno>_away_until` | plánovaný návrat člena |
 
@@ -154,10 +159,12 @@ V **Možnostech** integrace najdete:
 |---|---|
 | `binary_sensor.hp_group_<název>_home` | on = doma je aspoň zadaný počet členů skupiny. Atributy `count`, `people`, `since` |
 | `sensor.hp_group_<název>_expected_return` | nejbližší návrat člena skupiny, když skupina doma není |
+| `sensor.hp_group_<název>_since` | kdy se skupina naposledy změnila mezi doma a pryč |
 
 **Pravidla:**
 - `expected_return` je `unknown`, když nikdo nic neví, a nikdy není v minulosti.
 - Po restartu jsou entity chvíli `unavailable`. Odběratel má držet poslední stav.
+- `last_changed` entit se při restartu HA nastaví na čas restartu. Skutečný čas změny mají časové entity `…_since`, `…_last_arrived` a `…_last_left`, které se obnoví z úložiště integrace.
 
 ## Učení
 

@@ -557,6 +557,8 @@ class PersonView:
     expected_return: ExpectedReturn | None
     approaching: bool
     signals: Sequence[SignalView] = ()
+    last_arrived: datetime | None = None
+    last_left: datetime | None = None
 
     @property
     def is_home(self) -> bool | None:
@@ -586,6 +588,7 @@ class HouseholdView:
     last_return_error: float | None
     multiple_home: bool = False
     multiple_min: int = 2
+    multiple_since: datetime | None = None
 
 
 @dataclass(frozen=True, kw_only=True)

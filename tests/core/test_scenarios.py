@@ -612,3 +612,22 @@ def test_members_with_different_signals_and_reconfigure():
     house.step()
     assert set(house.result.persons) == {"parent"}
     assert house.person("parent").state is PersonState.HOME
+
+
+def test_last_arrived_and_left_survive_restart():
+    house = House([parent()])
+    house.set(GPS, "home")
+    assert house.person("parent").last_arrived is None  # first state is not an arrival
+    house.set(GPS, "not_home")
+    house.run(15)
+    left = house.person("parent").last_left
+    assert left == T0
+    house.run(60)
+    house.set(GPS, "home")
+    arrived = house.person("parent").last_arrived
+    assert arrived == house.now
+    since = house.person("parent").since
+    house.restart()
+    house.run(10)
+    view = house.person("parent")
+    assert (view.last_left, view.last_arrived, view.since) == (left, arrived, since)

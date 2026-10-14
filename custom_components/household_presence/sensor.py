@@ -82,6 +82,16 @@ HOUSEHOLD_SENSORS: tuple[HouseholdSensorDescription, ...] = (
         attrs_fn=lambda v: _return_attrs(v.expected_return, person=True),
     ),
     HouseholdSensorDescription(
+        key="someone_home_since",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda v: v.since,
+    ),
+    HouseholdSensorDescription(
+        key="multiple_home_since",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda v: v.multiple_since,
+    ),
+    HouseholdSensorDescription(
         key="expected_return_confidence",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -109,6 +119,21 @@ PERSON_SENSORS: tuple[PersonSensorDescription, ...] = (
         value_fn=lambda v: _at(v.expected_return),
         attrs_fn=lambda v: _return_attrs(v.expected_return, person=False),
     ),
+    PersonSensorDescription(
+        key="since",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda v: v.since,
+    ),
+    PersonSensorDescription(
+        key="last_arrived",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda v: v.last_arrived,
+    ),
+    PersonSensorDescription(
+        key="last_left",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda v: v.last_left,
+    ),
 )
 
 
@@ -127,7 +152,10 @@ async def async_setup_entry(
         )
     for group in runtime.engine.groups.values():
         async_add_entities(
-            [GroupReturnSensor(runtime, "expected_return", group)],
+            [
+                GroupReturnSensor(runtime, "expected_return", group),
+                GroupSinceSensor(runtime, "since", group),
+            ],
             config_subentry_id=group.group_id,
         )
 
@@ -197,3 +225,16 @@ class GroupReturnSensor(HouseholdPresenceEntity, SensorEntity):
         """Return source, person and confidence."""
         view = self.group
         return _return_attrs(view.expected_return, person=True) if view else {}
+
+
+class GroupSinceSensor(HouseholdPresenceEntity, SensorEntity):
+    """When the group last changed between home and away (survives restarts)."""
+
+    _platform = "sensor"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return the time of the last change."""
+        view = self.group
+        return view.since if view else None

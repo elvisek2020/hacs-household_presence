@@ -328,6 +328,7 @@ class PresenceEngine:
             last_return_error=self.last_errors.get(HOUSEHOLD_KEY),
             multiple_home=multiple_view,
             multiple_min=cfg.multiple_min,
+            multiple_since=self.multiple.since,
         )
         result = StepResult(
             household=view,
@@ -576,6 +577,8 @@ class PresenceEngine:
             expected_return=expected,
             approaching=member.name in approaching,
             signals=[e.view() for e in self._signals.get(mid, [])],
+            last_arrived=rt.last_arrived,
+            last_left=rt.last_left,
         )
 
     # --- persistence ----------------------------------------------------------------------

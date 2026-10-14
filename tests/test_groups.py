@@ -150,3 +150,13 @@ async def test_group_flow_needs_members(hass: HomeAssistant, fake_calendar) -> N
     )
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "no_members"
+
+
+async def test_group_since_entity(hass: HomeAssistant, fake_calendar) -> None:
+    hass.states.async_set(GPS, "home")
+    hass.states.async_set(OTHER, "home")
+    await setup_entry(hass, _entry())
+    state = hass.states.get("sensor.hp_group_adults_since")
+    assert state is not None
+    assert state.attributes["device_class"] == "timestamp"
+    assert state.state != "unknown"

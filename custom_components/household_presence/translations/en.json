@@ -347,6 +347,21 @@
           "just_left": "Just left",
           "away": "Away"
         }
+      },
+      "since": {
+        "name": "State changed"
+      },
+      "last_arrived": {
+        "name": "Last arrived"
+      },
+      "last_left": {
+        "name": "Last left"
+      },
+      "someone_home_since": {
+        "name": "Someone home changed"
+      },
+      "multiple_home_since": {
+        "name": "Several people home changed"
       }
     },
     "select": {

@@ -328,3 +328,38 @@ async def test_integration_reload_during_plan_is_not_an_arrival(
     hass.states.async_set(PC, "on")
     await _wait(hass, freezer, 10)
     assert hass.states.get("binary_sensor.hp_kid_home").state == "off"
+
+
+async def test_since_entities_survive_reload(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+    fake_calendar,
+) -> None:
+    freezer.move_to("2026-10-12 08:00:00+02:00")
+    hass.states.async_set(GPS, "home")
+    hass.states.async_set(PC, "on")
+    hass.states.async_set(SCHOOL, "off")
+    await setup_entry(hass, config_entry)
+    hass.states.async_set(GPS, "not_home")
+    await _wait(hass, freezer, 16)
+    hass.states.async_set(GPS, "home")
+    await hass.async_block_till_done()
+    before = {
+        e: hass.states.get(e).state
+        for e in (
+            "sensor.hp_parent_since",
+            "sensor.hp_parent_last_arrived",
+            "sensor.hp_parent_last_left",
+            "sensor.hp_someone_home_since",
+            "sensor.hp_multiple_home_since",
+        )
+    }
+    assert dt_util.parse_datetime(before["sensor.hp_parent_last_left"]) == dt_util.parse_datetime(
+        "2026-10-12 08:00:00+02:00"
+    )
+    assert before["sensor.hp_parent_since"] == before["sensor.hp_parent_last_arrived"]
+    await _wait(hass, freezer, 30)
+    assert await hass.config_entries.async_reload(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert {e: hass.states.get(e).state for e in before} == before

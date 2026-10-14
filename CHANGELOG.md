@@ -5,6 +5,18 @@ text vydání na GitHubu — a ten Home Assistant / HACS ukazuje v okně aktuali
 
 Nejnovější verze je nahoře.
 
+## v0.3.0 — 2026-10-14
+
+### ✨ Novinky
+
+- **Skutečné časy změn jako entity:** dashboardy ukazují `last_changed`, který se při restartu HA nastaví na čas restartu. Nové časové entity mají skutečný čas a po restartu se obnoví beze skoku:
+  - člen: `sensor.hp_<člen>_since` (Změna stavu), `sensor.hp_<člen>_last_arrived` (Poslední příchod), `sensor.hp_<člen>_last_left` (Poslední odchod),
+  - domácnost: `sensor.hp_someone_home_since`, `sensor.hp_multiple_home_since`,
+  - skupina: `sensor.hp_group_<název>_since`.
+- Poslední příchod a odchod se začnou plnit od prvního příchodu nebo odchodu po aktualizaci.
+
+Po aktualizaci restartuj Home Assistant.
+
 ## v0.2.0 — 2026-10-13
 
 ### ✨ Novinky

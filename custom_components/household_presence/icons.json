@@ -50,6 +50,21 @@
       },
       "state": {
         "default": "mdi:account-clock-outline"
+      },
+      "since": {
+        "default": "mdi:clock-outline"
+      },
+      "last_arrived": {
+        "default": "mdi:home-import-outline"
+      },
+      "last_left": {
+        "default": "mdi:home-export-outline"
+      },
+      "someone_home_since": {
+        "default": "mdi:home-clock-outline"
+      },
+      "multiple_home_since": {
+        "default": "mdi:account-multiple-outline"
       }
     },
     "select": {
