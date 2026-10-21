@@ -16,6 +16,8 @@ Integrace pro Home Assistant, která z entit, které už máte (osoby, trackery 
 
 Integrace nic neřídí. Poskytuje stabilní sadu entit, na kterou se napojí topení, světla, alarm nebo notifikace. Všechno běží lokálně, poloha se neukládá.
 
+![Household Presence — náhled](docs/preview.png)
+
 ## Předpoklady a závislosti
 
 - Home Assistant 2026.3 nebo novější.
