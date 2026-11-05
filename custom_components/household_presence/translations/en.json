@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Household Presence",
+        "title": "Sledování přítomnosti v domácnosti (EK)",
         "description": "Create the household. Members are added afterwards as separate entries, each with its own signals.",
         "data": {
           "name": "Household name",
@@ -476,7 +476,7 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "Household Presence is not loaded."
+      "message": "Sledování přítomnosti v domácnosti (EK) is not loaded."
     },
     "unknown_member": {
       "message": "Unknown member: {member}."

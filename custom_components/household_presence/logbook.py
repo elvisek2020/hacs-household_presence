@@ -24,7 +24,7 @@ def async_describe_events(
     def describe(event: Event) -> dict[str, Any]:
         data = event.data
         description: dict[str, Any] = {
-            LOGBOOK_ENTRY_NAME: data.get("name") or "Household Presence",
+            LOGBOOK_ENTRY_NAME: data.get("name") or "Sledování přítomnosti v domácnosti (EK)",
             LOGBOOK_ENTRY_MESSAGE: data.get("message", ""),
         }
         if data.get("entity_id"):

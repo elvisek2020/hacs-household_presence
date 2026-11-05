@@ -5,6 +5,14 @@ text vydání na GitHubu — a ten Home Assistant / HACS ukazuje v okně aktuali
 
 Nejnovější verze je nahoře.
 
+## v0.3.1 — 2026-11-05
+
+### 🎨 Vzhled
+
+- Integrace se nově jmenuje **Sledování přítomnosti v domácnosti (EK)** (HACS, Zařízení a služby, README). Doména `household_presence`, entity a zařízení zůstávají beze změny.
+
+Po aktualizaci restartuj Home Assistant.
+
 ## v0.3.0 — 2026-10-14
 
 ### ✨ Novinky

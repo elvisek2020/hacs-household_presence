@@ -1,4 +1,4 @@
-# Household Presence
+# Sledování přítomnosti v domácnosti (EK)
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![Release](https://img.shields.io/github/v/release/elvisek2020/hacs-household_presence)](https://github.com/elvisek2020/hacs-household_presence/releases)
@@ -16,7 +16,7 @@ Integrace pro Home Assistant, která z entit, které už máte (osoby, trackery 
 
 Integrace nic neřídí. Poskytuje stabilní sadu entit, na kterou se napojí topení, světla, alarm nebo notifikace. Všechno běží lokálně, poloha se neukládá.
 
-![Household Presence — náhled](docs/preview.png)
+![Sledování přítomnosti v domácnosti (EK) — náhled](docs/preview.png)
 
 ## Předpoklady a závislosti
 
@@ -30,7 +30,7 @@ Integrace nic neřídí. Poskytuje stabilní sadu entit, na kterou se napojí to
 
 1. HACS → tři tečky vpravo nahoře → **Custom repositories**
 2. Vlož URL `https://github.com/elvisek2020/hacs-household_presence`, kategorie **Integration**
-3. Nainstaluj **Household Presence**
+3. Nainstaluj **Sledování přítomnosti v domácnosti (EK)**
 4. Restartuj Home Assistant a přidej ji v Nastavení → Zařízení a služby → Přidat integraci. Zadáš název domácnosti a zpoždění odchodu.
 
 HACS nabízí aktualizace z GitHub releases.

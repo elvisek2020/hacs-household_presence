@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Přítomnost domácnosti",
+        "title": "Sledování přítomnosti v domácnosti (EK)",
         "description": "Založí domácnost. Členy přidáte potom jako samostatné položky, každého s vlastními signály.",
         "data": {
           "name": "Název domácnosti",
@@ -476,7 +476,7 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "Přítomnost domácnosti není načtená."
+      "message": "Sledování přítomnosti v domácnosti (EK) není načtené."
     },
     "unknown_member": {
       "message": "Neznámý člen: {member}."

@@ -1,7 +1,9 @@
 {
   "domain": "household_presence",
-  "name": "Household Presence",
-  "codeowners": ["@elvisek2020"],
+  "name": "Sledování přítomnosti v domácnosti (EK)",
+  "codeowners": [
+    "@elvisek2020"
+  ],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/elvisek2020/hacs-household_presence",
@@ -10,5 +12,5 @@
   "issue_tracker": "https://github.com/elvisek2020/hacs-household_presence/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.3.0"
+  "version": "0.3.1"
 }
